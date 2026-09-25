@@ -1,6 +1,11 @@
-# Data
-data/raw/*.csv
-data/processed/*.csv
+# Data and documents: no csv, docx or pdf anywhere
+*.csv
+*.docx
+*.pdf
+# except the aggregate 2020 survey table that report/results.qmd reads
+!data/raw/gaza_survey2020_kcal_bmi_agg.csv
+# analysis outputs: contain participant-level rows
+data/processed/results/
 
 # History files
 .Rhistory
@@ -52,4 +57,9 @@ rsconnect/
 CLAUDE.md
 *.DS_Store
 .DS_Store
-/quarto/README_files
+/report/results_files
+
+# Rendered report and manuscript figures
+/report/results.html
+/report/results.docx
+/outputs/

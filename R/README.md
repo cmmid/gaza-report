@@ -1,22 +1,13 @@
 ### Quickstart
 
-To prepare and load data for analysis:
+To prepare and analyse data:
 
-1. Save data into `data/raw`
+**1. Save data** into `data/raw`
 
 - `gaza_adult_weight_form1.csv`
 - `gaza_adult_weight_form2.csv`
 
-2. Run:
-
-```
-# Process raw data
-source(here::here("R", "clean.R"))
-# Read in processed data
-data_processed <- read.csv(here::here("data", "processed", "participants.csv"))
-# Filter to valid records
-participants <- data_processed[data_processed$record_remove == "include", ]
-```
+**2. Prepare the data and run the analysis.** Run `R/main.R`. It sources `R/clean.R` to build `data/processed/participants.csv` and `data/processed/data-quality.csv`, then renders `report/results.qmd`.
 
 Note that for completeness, the data processing step keeps all recorded measurements (with duplicates, unidentified, etc).
 Invalid records are described in the `record_remove` field, and any modified values recorded in `record_notes`.
@@ -30,9 +21,14 @@ Invalid records are described in the `record_remove` field, and any modified val
   - Reasons for exclusion are flagged in the field `record_remove`
   - Records passing all criteria are labelled `include`
 
-Filter to `record_remove == "include"` to use only the valid records (a `r dim_desc(participants)` dataframe).
-Or selectively exclude using `record_remove` labels.
+To run the clean step alone:
 
-To render this report locally, use `quarto::quarto_render(here::here("R", "cleaning.qmd"))`.
-Add interactivity to plots with `ggplotly(plot)`.
+```
+source(here::here("R", "clean.R"))
+```
 
+`report/results.qmd` is the analysis: data quality and exclusions, participant characteristics, change since pre-war, associations, recovery during follow-up, and the selection checks, in one document.
+It filters to `record_remove == "include"`, writes `report/results.html` for review and `report/results.docx` for pasting into the manuscript draft, and saves the manuscript figures to `outputs/figures/` at print size.
+It is not cached, and renders in under a minute.
+
+Inference is frequentist: means and prevalences with 95% confidence intervals, `lm` for the associations, `glm` for who returns, and one `lmer` for BMI over calendar time.

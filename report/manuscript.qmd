@@ -1,3 +1,18 @@
+---
+title: "Results"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+  docx:
+    toc: false
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
 # draft - monitoring nutritional status in Gaza
 
 Katharine Sherratt, Kevin van Zandvoort, Ciara Judge, Clara Brigitta,
