@@ -1,0 +1,13 @@
+
+## Updates to current draft
+
+## Additional analysis
+
+Check participants against NICE definition of malnourished to give incidence and prevalence of malnourished among the longitudinal sample.
+
+NICE definition is:
+
+- A body mass index (BMI) of less than 18.5 kg/m2.
+- Unintentional weight loss greater than 10% within the last 3 to 6 months.
+- A BMI of less than 20 kg/m2 and unintentional weight loss greater than 5% within the last 3 to 6 months.
+

@@ -1,0 +1,1574 @@
+---
+title: "Results (Bayesian)"
+format: gfm
+execute:
+  echo: false
+  warning: false
+  message: false
+  cache: true
+---
+
+Analysis and results for the manuscript Results section.
+
+-   Reads `data/processed/participants.csv` (written by [`R/clean.R`](../R/clean.R)); everything else is computed here.
+-   See [README.qmd](README.qmd) for data quality and exclusions.
+-   Companion to [results.qmd](results.qmd). Identical data preparation, descriptive statistics and association models; three inference steps are re-fitted with posterior sampling. Each is marked "Bayesian" in the text below, and the frequentist fit is retained alongside it as a comparison.
+
+The three:
+
+| Step | Frequentist version | Why it is re-fitted |
+|------------------------|------------------------|------------------------|
+| BMI slope during follow-up | `lmer` + profile CI | The claim is that BMI recovered. A posterior gives `P(slope > 0)` and `P(slope > clinically meaningful)` directly, and puts an interval on the variance components that `lmer` reports as bare point estimates. |
+| Slope by age group | Wald intervals, no p-values | The frequentist caption has to say "an interval spanning zero is not evidence of no difference". A posterior states the probability instead. |
+| Selection checks | t-tests read as "no difference" | These argue for equivalence. A non-significant t-test cannot support that; an equivalence test against a region of practical equivalence can. |
+
+```{r}
+#| label: setup
+#| cache: false
+
+set.seed(20260612)
+
+pacman::p_load(
+  here,
+  readr,
+  dplyr,
+  tidyr,
+  purrr,
+  stringr,
+  forcats,
+  lubridate,
+  broom,
+  broom.helpers,
+  broom.mixed,
+  lme4,
+  performance,
+  binom,
+  mgcv,
+  rstanarm,
+  bayestestR,
+  knitr,
+  ggplot2,
+  scales
+)
+
+# rstanarm models are precompiled, so no Stan toolchain compile step is needed.
+options(mc.cores = max(1, parallel::detectCores() - 1))
+
+# Sampler settings, applied to every fit below
+n_chains <- 4
+n_iter <- 4000
+stan_seed <- 20260612
+
+knitr::opts_chunk$set(autodep = TRUE)
+
+theme_set(theme_bw() + theme(legend.position = "bottom"))
+
+# Factor level orders. The first level of each is the regression reference.
+age_levels <- c("Age under 30", "Age 30-45", "Age over 45")
+sex_levels <- c("Female", "Male")
+governorate_levels <- c(
+  "Deir Al Balah",
+  "Gaza City, North Gaza",
+  "Khan Yunis, Rafah"
+)
+role_levels <- c("National staff", "Casual worker", "Other")
+chronic_levels <- c("No chronic condition", "Chronic condition")
+children_levels <- c("0", "1", "2", "3+")
+cohort_levels <- c("Aug-Sep 2025", "Oct-Nov 2025")
+bmi_levels <- c("Underweight", "Normal", "Overweight", "Obese")
+
+# Display labels, used for both model output and comparison tables
+variable_labels <- c(
+  age = "Age group",
+  sex = "Sex",
+  governorate_cat = "Governorate of residence",
+  children = "Dependent children < 10y",
+  role_cat = "Professional role",
+  entry_cohort = "Month of study entry",
+  chronic = "Chronic condition",
+  bmi_prewar = "Pre-war BMI (per kg/m2)",
+  bmi_entry = "BMI at study entry (kg/m2)",
+  pct_weight_change = "Weight change since pre-war (%)",
+  age_years = "Age (years)"
+)
+
+days_per_month <- 30
+
+fmt_ci <- function(estimate, low, high, digits = 1) {
+  sprintf(
+    paste0("%.", digits, "f (%.", digits, "f to %.", digits, "f)"),
+    estimate,
+    low,
+    high
+  )
+}
+
+fmt_pct <- function(x, digits = 1) {
+  sprintf(paste0("%.", digits, "f%%"), x)
+}
+
+fmt_p <- function(p) {
+  format.pval(p, digits = 2, eps = 0.001)
+}
+
+# Posterior probabilities are never rounded to 0 or 1: with 8000 draws the
+# resolution is 1/8000, so report the bound rather than implying certainty.
+fmt_prob <- function(p) {
+  case_when(
+    p > 0.9995 ~ "> 0.999",
+    p < 0.0005 ~ "< 0.001",
+    .default = sprintf("%.3f", p)
+  )
+}
+
+# Draws for one model term, rescaled from per-day to per-30-day
+slope_draws <- function(fit, term) {
+  as.numeric(as.matrix(fit, pars = term)) * days_per_month
+}
+
+# Posterior median, 95% credible interval, and the probability of exceeding
+# each of a named set of thresholds
+summarise_draws <- function(draws, thresholds = c(`P(> 0)` = 0)) {
+  quantiles <- quantile(draws, c(0.025, 0.5, 0.975))
+  probabilities <- map(thresholds, \(threshold) mean(draws > threshold))
+
+  tibble(
+    median = quantiles[[2]],
+    conf.low = quantiles[[1]],
+    conf.high = quantiles[[3]],
+    !!!probabilities
+  )
+}
+```
+
+Participants entered in two waves, August-September and October-November 2025, because the study was re-advertised in October.
+That risks confounding any comparison over calendar time with the changing composition of the sample.
+Descriptive statistics are therefore reported separately by entry wave, `entry_cohort` is a covariate in the longitudinal models, and the two waves are compared directly in the selection checks at the end.
+
+```{r}
+#| label: participant-sets
+#| cache.extra: !expr file.mtime(here::here("data", "processed", "participants.csv"))
+
+data_processed <- read_csv(
+  here("data", "processed", "participants.csv"),
+  show_col_types = FALSE
+)
+
+included <- data_processed |>
+  filter(record_remove == "include", !is.na(weight)) |>
+  mutate(
+    record_date = as_date(record_date),
+    date_entry = as_date(date_entry),
+    entry_cohort = if_else(
+      date_entry < as_date("2025-10-01"),
+      "Aug-Sep 2025",
+      "Oct-Nov 2025"
+    ),
+    # North Gaza (n = 20) and Rafah (n = 8) are too sparse to estimate separately
+    governorate_cat = case_when(
+      governorate %in% c("Gaza City", "North Gaza") ~ "Gaza City, North Gaza",
+      governorate %in% c("Khan Yunis", "Rafah") ~ "Khan Yunis, Rafah",
+      governorate == "Deir Al Balah" ~ "Deir Al Balah"
+    ),
+    # collapse sparse employment categories
+    role_cat = case_when(
+      role == "National staff" ~ "National staff",
+      role == "Casual/daily worker" ~ "Casual worker",
+      is.na(role) ~ NA_character_,
+      TRUE ~ "Other"
+    ),
+    # ODK multi-select: "0" = no condition reported, any code = at least one
+    chronic = case_when(
+      is.na(chronic_condition) ~ NA_character_,
+      chronic_condition == "0" ~ "No chronic condition",
+      TRUE ~ "Chronic condition"
+    )
+  ) |>
+  mutate(
+    age = factor(age, levels = age_levels),
+    sex = factor(sex, levels = sex_levels),
+    governorate_cat = factor(governorate_cat, levels = governorate_levels),
+    role_cat = factor(role_cat, levels = role_levels),
+    chronic = factor(chronic, levels = chronic_levels),
+    children = factor(children, levels = children_levels),
+    entry_cohort = factor(entry_cohort, levels = cohort_levels)
+  ) |>
+  add_count(id, name = "n_obs")
+
+# Cross-sectional set: one row per participant at entry.
+# Outcome is change from pre-war to the first measured weight.
+baseline <- included |>
+  filter(record_number == 1) |>
+  mutate(
+    pct_weight_change = 100 * (weight_entry - weight_prewar) / weight_prewar,
+    bmi_change = bmi_entry - bmi_prewar,
+    lost_5pct = pct_weight_change <= -5,
+    lost_10pct = pct_weight_change <= -10,
+    underweight_prewar = bmi_prewar < 18.5,
+    underweight_entry = bmi_entry < 18.5,
+    bmi_under20_entry = bmi_entry < 20,
+    has_followup = n_obs >= 2
+  )
+
+cross_sectional <- filter(baseline, !is.na(weight_prewar))
+
+# Longitudinal set: participants with 2+ included records. Two participants are
+# dropped for an implausible between-visit rate of BMI change (>= 1 kg/m2/day),
+# matching the exclusion applied in R/visualise.R.
+longitudinal_all <- included |>
+  filter(n_obs >= 2) |>
+  arrange(id, record_date) |>
+  group_by(id) |>
+  mutate(
+    bmi_daily_change = c(NA, diff(bmi)) / c(NA, as.numeric(diff(record_date)))
+  ) |>
+  ungroup()
+
+implausible_ids <- longitudinal_all |>
+  filter(abs(bmi_daily_change) >= 1) |>
+  pull(id) |>
+  unique()
+
+longitudinal <- longitudinal_all |>
+  filter(!id %in% implausible_ids) |>
+  mutate(id = factor(id))
+```
+
+-   `r nrow(baseline)` participants were measured at study entry, of whom `r nrow(cross_sectional)` recalled a pre-war weight.
+-   `r n_distinct(longitudinal_all$id)` returned for at least one further measurement
+    -   `r n_distinct(longitudinal$id)` of those are analysed, after `r length(implausible_ids)` were dropped for an implausible rate of BMI change (\>= 1 kg/m2/day).
+
+## Change from pre-war to study entry
+
+```{r}
+#| label: descriptive-change
+
+summarise_change <- function(data) {
+  data |>
+    summarise(
+      n = n(),
+      across(
+        c(pct_weight_change, bmi_change),
+        list(
+          mean = ~ mean(.x, na.rm = TRUE),
+          sd = ~ sd(.x, na.rm = TRUE)
+        )
+      ),
+      across(
+        pct_weight_change,
+        list(
+          median = ~ median(.x, na.rm = TRUE),
+          p25 = ~ quantile(.x, 0.25, na.rm = TRUE),
+          p75 = ~ quantile(.x, 0.75, na.rm = TRUE)
+        )
+      ),
+      pct_lost_5pct = 100 * mean(lost_5pct, na.rm = TRUE),
+      pct_lost_10pct = 100 * mean(lost_10pct, na.rm = TRUE),
+      pct_underweight_entry = 100 * mean(underweight_entry, na.rm = TRUE),
+      .groups = "drop"
+    )
+}
+
+descriptive <- bind_rows(
+  cross_sectional |>
+    summarise_change() |>
+    mutate(group = "Overall", .before = 1),
+  cross_sectional |>
+    group_by(group = as.character(entry_cohort)) |>
+    summarise_change()
+)
+
+# Mean change with a 95% CI
+headline <- bind_rows(
+  tidy(t.test(cross_sectional$pct_weight_change)) |>
+    mutate(outcome = "Weight change since pre-war (%)"),
+  tidy(t.test(cross_sectional$bmi_change)) |>
+    mutate(outcome = "BMI change since pre-war (kg/m2)")
+) |>
+  transmute(
+    outcome,
+    n = nrow(cross_sectional),
+    mean = estimate,
+    conf.low,
+    conf.high
+  )
+
+# Prevalence of each malnutrition-adjacent threshold (per NICE), Wilson 95% CIs
+prevalence_ci <- function(indicator, label, timeframe) {
+  indicator <- indicator[!is.na(indicator)]
+  binom.confint(sum(indicator), length(indicator), methods = "wilson") |>
+    transmute(
+      indicator = label,
+      timeframe = timeframe,
+      n_positive = x, # binom.confint's successes column
+      n = n,
+      pct = 100 * mean,
+      pct_low = 100 * lower,
+      pct_high = 100 * upper
+    )
+}
+
+thresholds <- bind_rows(
+  prevalence_ci(
+    cross_sectional$underweight_prewar,
+    "BMI < 18.5 kg/m2",
+    "Pre-war (recalled, Oct 2023)"
+  ),
+  prevalence_ci(
+    cross_sectional$underweight_entry,
+    "BMI < 18.5 kg/m2",
+    "At study entry (measured)"
+  ),
+  prevalence_ci(
+    cross_sectional$bmi_under20_entry,
+    "BMI < 20 kg/m2",
+    "At study entry (measured)"
+  ),
+  prevalence_ci(
+    cross_sectional$lost_5pct,
+    "Lost >= 5% of body weight",
+    "Pre-war to study entry (~22 months)"
+  ),
+  prevalence_ci(
+    cross_sectional$lost_10pct,
+    "Lost >= 10% of body weight",
+    "Pre-war to study entry (~22 months)"
+  )
+)
+```
+
+Among `r nrow(cross_sectional)` participants who recalled a pre-war weight:
+
+```{r}
+#| label: tbl-headline
+#| tbl-cap: "Mean change from self-recalled pre-war (October 2023) to first measured weight at study entry."
+
+headline |>
+  transmute(
+    Outcome = outcome,
+    N = n,
+    `Mean change (95% CI)` = fmt_ci(mean, conf.low, conf.high, 2)
+  ) |>
+  kable()
+```
+
+```{r}
+#| label: tbl-thresholds
+#| tbl-cap: >-
+#|   Prevalence of low BMI and of substantial weight loss, with Wilson 95% confidence intervals.
+#|   Components are reported separately with their own reference periods rather than combined into a composite malnutrition definition (see note below).
+
+thresholds |>
+  transmute(
+    Indicator = indicator,
+    `Reference period` = timeframe,
+    `n / N` = paste0(n_positive, " / ", n),
+    `% (95% CI)` = fmt_ci(pct, pct_low, pct_high)
+  ) |>
+  kable()
+```
+
+Note on composite definitions: the NICE malnutrition criteria require unintentional weight loss over a 3 to 6 month window.
+The pre-war reference here is roughly 22 months earlier, so the composite does not apply to this comparison, and within the study window the trend is recovery rather than loss.
+The components are therefore reported separately, each with its reference period stated.
+
+### By entry cohort
+
+```{r}
+#| label: tbl-descriptive
+#| tbl-cap: >-
+#|   Change since pre-war, overall and by month of study entry.
+#|   The study was re-advertised in October 2025, producing two entry waves.
+
+descriptive |>
+  transmute(
+    Group = group,
+    N = n,
+    `Weight change %, mean (SD)` = sprintf(
+      "%.1f (%.1f)",
+      pct_weight_change_mean,
+      pct_weight_change_sd
+    ),
+    `Weight change %, median [IQR]` = sprintf(
+      "%.1f [%.1f to %.1f]",
+      pct_weight_change_median,
+      pct_weight_change_p25,
+      pct_weight_change_p75
+    ),
+    `BMI change, mean (SD)` = sprintf(
+      "%.1f (%.1f)",
+      bmi_change_mean,
+      bmi_change_sd
+    ),
+    `Lost >=5%` = fmt_pct(pct_lost_5pct),
+    `Lost >=10%` = fmt_pct(pct_lost_10pct),
+    `Underweight at entry` = fmt_pct(pct_underweight_entry)
+  ) |>
+  kable()
+```
+
+## Associations with change since pre-war
+
+Linear regression of change since pre-war on each participant characteristic, in three specifications.
+`Univariable` fits one exposure at a time.
+`Adjusted` fits all characteristics simultaneously.
+`Adjusted + pre-war BMI` adds pre-war BMI, which tests whether apparent differences simply reflect how heavy participants were to begin with: a participant who started heavier has more weight available to lose.
+
+Chronic condition is held out of the adjusted models because it was only asked after August 2025 and is missing for two thirds of participants.
+It is reported univariably, plus one adjusted model restricted to those who were asked.
+
+```{r}
+#| label: associations
+
+exposures <- c(
+  "age",
+  "sex",
+  "governorate_cat",
+  "children",
+  "role_cat",
+  "entry_cohort"
+)
+
+outcomes <- c(
+  pct_weight_change = "Weight change since pre-war (%)",
+  bmi_change = "BMI change since pre-war (kg/m2)"
+)
+
+fit_assoc <- function(data,
+                      outcome_var,
+                      predictors,
+                      model_label,
+                      keep_variables = predictors) {
+  model_formula <- reformulate(predictors, response = outcome_var)
+  fit <- lm(model_formula, data = data)
+  tidy_plus_plus(
+    fit,
+    conf.int = TRUE,
+    variable_labels = variable_labels,
+    add_header_rows = FALSE,
+    add_reference_rows = FALSE
+  ) |>
+    filter(variable %in% keep_variables) |>
+    transmute(
+      model = model_label,
+      variable,
+      variable_label = var_label,
+      # factor terms carry their contrast level; continuous terms are per-unit
+      level = if_else(is.na(contrasts), "per unit", label),
+      estimate,
+      conf.low,
+      conf.high,
+      p.value,
+      n_model = stats::nobs(fit)
+    )
+}
+
+fit_all_specifications <- function(data, outcome_var) {
+  bind_rows(
+    # 1. univariable, one model per exposure
+    map(
+      c(exposures, "chronic", "bmi_prewar"),
+      \(exposure) fit_assoc(data, outcome_var, exposure, "Univariable")
+    ) |>
+      list_rbind(),
+    # 2. mutually adjusted
+    fit_assoc(data, outcome_var, exposures, "Adjusted"),
+    # 3. mutually adjusted, plus pre-war BMI
+    fit_assoc(
+      data,
+      outcome_var,
+      c(exposures, "bmi_prewar"),
+      "Adjusted + pre-war BMI"
+    )
+  ) |>
+    mutate(outcome = unname(outcomes[outcome_var]), .before = 1)
+}
+
+associations <- names(outcomes) |>
+  map(\(outcome_var) fit_all_specifications(cross_sectional, outcome_var)) |>
+  list_rbind() |>
+  mutate(
+    model = factor(
+      model,
+      levels = c("Univariable", "Adjusted", "Adjusted + pre-war BMI")
+    )
+  ) |>
+  arrange(outcome, model, variable, level)
+
+# Chronic condition, adjusted, restricted to participants who were asked
+chronic_adjusted <- names(outcomes) |>
+  map(\(outcome_var) {
+    fit_assoc(
+      filter(cross_sectional, !is.na(chronic)),
+      outcome_var,
+      c(exposures, "chronic"),
+      "Adjusted (restricted to those asked)",
+      keep_variables = "chronic"
+    ) |>
+      mutate(outcome = unname(outcomes[outcome_var]), .before = 1)
+  }) |>
+  list_rbind()
+
+table_associations <- function(outcome_name) {
+  associations |>
+    filter(outcome == outcome_name) |>
+    mutate(
+      cell = paste0(
+        fmt_ci(estimate, conf.low, conf.high, 2),
+        " p=",
+        fmt_p(p.value)
+      )
+    ) |>
+    select(Characteristic = variable_label, Level = level, model, cell) |>
+    pivot_wider(
+      names_from = model,
+      values_from = cell,
+      values_fill = "not in model"
+    ) |>
+    kable()
+}
+
+plot_forest <- function(outcome_name, x_label) {
+  associations |>
+    filter(
+      outcome == outcome_name,
+      model != "Univariable",
+      variable != "bmi_prewar"
+    ) |>
+    mutate(
+      label = paste0(variable_label, ": ", level),
+      label = fct_rev(fct_inorder(label))
+    ) |>
+    ggplot(aes(x = estimate, y = label, colour = model)) +
+    geom_vline(xintercept = 0, linetype = 2, colour = "grey40") +
+    geom_pointrange(
+      aes(xmin = conf.low, xmax = conf.high),
+      position = position_dodge(width = 0.5),
+      size = 0.3
+    ) +
+    scale_colour_manual(
+      values = c(
+        "Adjusted" = "#01454f",
+        "Adjusted + pre-war BMI" = "#ffa600"
+      ),
+      name = NULL
+    ) +
+    labs(x = x_label, y = NULL)
+}
+```
+
+Estimates are percentage points, relative to the reference level.
+
+```{r}
+#| label: tbl-associations-weight
+#| tbl-cap: >-
+#|   Difference in percent weight change since pre-war, by participant characteristic.
+#|   Reference levels: age 30-45, female, Deir Al Balah, no dependent children, national staff, entry Aug-Sep 2025.
+#|   North Gaza (n=20) is combined with Gaza City and Rafah (n=8) with Khan Yunis because both are too sparse to estimate separately.
+
+table_associations("Weight change since pre-war (%)")
+```
+
+```{r}
+#| label: tbl-associations-bmi
+#| tbl-cap: >-
+#|   Difference in absolute BMI change since pre-war (kg/m2), by participant characteristic.
+#|   Same models and reference levels as the table above.
+
+table_associations("BMI change since pre-war (kg/m2)")
+```
+
+Chronic condition, fitted on the subset who were asked:
+
+```{r}
+#| label: tbl-chronic
+
+chronic_adjusted |>
+  transmute(
+    Outcome = outcome,
+    Model = model,
+    `Estimate (95% CI)` = fmt_ci(estimate, conf.low, conf.high, 2),
+    `p` = fmt_p(p.value),
+    N = n_model
+  ) |>
+  kable()
+```
+
+```{r}
+#| label: fig-forest-weight
+#| fig-cap: >-
+#|   Difference in percent weight change since pre-war by participant characteristic, mutually adjusted and additionally adjusted for pre-war BMI.
+#|   Points are estimates, bars are 95% confidence intervals.
+#|   Negative values indicate greater weight loss than the reference level.
+#| fig-height: 7
+#| fig-width: 8
+
+plot_forest(
+  "Weight change since pre-war (%)",
+  "Difference in weight change since pre-war (percentage points)"
+)
+```
+
+```{r}
+#| label: fig-forest-bmi
+#| fig-cap: "Difference in absolute BMI change since pre-war by participant characteristic, on the same models."
+#| fig-height: 7
+#| fig-width: 8
+
+plot_forest(
+  "BMI change since pre-war (kg/m2)",
+  "Difference in BMI change since pre-war (kg/m2)"
+)
+```
+
+## BMI categories, pre-war to study entry
+
+```{r}
+#| label: bmi-categories
+
+# One long table of WHO category by period, feeding both the counts and the pyramid
+bmi_category_long <- cross_sectional |>
+  select(
+    id,
+    entry_cohort,
+    sex,
+    age,
+    `Pre-war` = bmi_category_prewar,
+    `Study entry` = bmi_category_entry
+  ) |>
+  pivot_longer(
+    c(`Pre-war`, `Study entry`),
+    names_to = "period",
+    values_to = "bmi_category"
+  ) |>
+  filter(!is.na(bmi_category)) |>
+  mutate(
+    period = factor(period, levels = c("Pre-war", "Study entry")),
+    bmi_category = factor(bmi_category, levels = bmi_levels)
+  )
+
+bmi_categories <- bmi_category_long |>
+  count(entry_cohort, period, bmi_category) |>
+  group_by(entry_cohort, period) |>
+  mutate(pct = 100 * n / sum(n)) |>
+  ungroup() |>
+  arrange(entry_cohort, period, bmi_category)
+
+# Transition matrix: where each pre-war category ended up at study entry
+bmi_transitions <- cross_sectional |>
+  filter(!is.na(bmi_category_prewar), !is.na(bmi_category_entry)) |>
+  count(bmi_category_prewar, bmi_category_entry) |>
+  group_by(bmi_category_prewar) |>
+  mutate(pct_of_prewar_category = 100 * n / sum(n)) |>
+  ungroup()
+
+# Overweight or obese pre-war, normal or underweight at entry
+category_shift <- cross_sectional |>
+  filter(!is.na(bmi_category_prewar), !is.na(bmi_category_entry)) |>
+  summarise(
+    n = n(),
+    pct_overweight_obese_prewar = 100 *
+      mean(bmi_category_prewar %in% c("Overweight", "Obese")),
+    pct_overweight_obese_entry = 100 *
+      mean(bmi_category_entry %in% c("Overweight", "Obese")),
+    pct_moved_down = 100 *
+      mean(
+        bmi_category_prewar %in% c("Overweight", "Obese") &
+          bmi_category_entry %in% c("Normal", "Underweight")
+      )
+  )
+```
+
+```{r}
+#| label: tbl-category-shift
+#| tbl-cap: "Movement between WHO BMI categories from pre-war to study entry."
+
+category_shift |>
+  transmute(
+    N = n,
+    `Overweight or obese pre-war` = fmt_pct(pct_overweight_obese_prewar),
+    `Overweight or obese at entry` = fmt_pct(pct_overweight_obese_entry),
+    `Moved from overweight/obese to normal/underweight` = fmt_pct(pct_moved_down)
+  ) |>
+  kable()
+```
+
+This shift is depletion from a high starting point, not an improvement in health.
+Read it alongside the mean BMI drop of `r sprintf("%.1f kg/m2", headline$mean[headline$outcome == "BMI change since pre-war (kg/m2)"])` and the rise in underweight prevalence from `r fmt_pct(thresholds$pct[thresholds$timeframe == "Pre-war (recalled, Oct 2023)"])` to `r fmt_pct(thresholds$pct[thresholds$indicator == "BMI < 18.5 kg/m2" & thresholds$timeframe == "At study entry (measured)"])`.
+
+```{r}
+#| label: fig-bmi-categories
+#| fig-cap: >-
+#|   Distribution of WHO BMI categories pre-war and at study entry, by entry cohort.
+#|   Percentages within each cohort and time point.
+
+bmi_categories |>
+  ggplot(aes(x = period, y = pct, fill = bmi_category)) +
+  geom_col(width = 0.7) +
+  facet_wrap(~entry_cohort) +
+  scale_fill_viridis_d(direction = -1, name = "BMI category") +
+  scale_y_continuous(labels = label_percent(scale = 1)) +
+  labs(x = NULL, y = "Participants")
+```
+
+```{r}
+#| label: fig-age-sex-pyramid
+#| fig-cap: "Age-sex distribution by BMI category, pre-war and at study entry."
+
+bmi_category_long |>
+  filter(!is.na(sex), !is.na(age)) |>
+  count(period, sex, age, bmi_category) |>
+  mutate(n_signed = if_else(sex == "Male", -n, n)) |>
+  ggplot(aes(x = n_signed, y = age, fill = bmi_category)) +
+  geom_col() +
+  geom_vline(xintercept = 0, colour = "#01454f", linewidth = 0.3) +
+  scale_x_continuous(labels = abs) +
+  scale_fill_viridis_d(direction = -1, name = "BMI category") +
+  facet_wrap(~period) +
+  labs(x = "Participants  (Male <- | -> Female)", y = NULL)
+```
+
+```{r}
+#| label: tbl-transitions
+#| tbl-cap: >-
+#|   Where each pre-war BMI category ended up at study entry.
+#|   Row percentages.
+
+bmi_transitions |>
+  mutate(cell = sprintf("%d (%.0f%%)", n, pct_of_prewar_category)) |>
+  select(bmi_category_prewar, bmi_category_entry, cell) |>
+  pivot_wider(
+    names_from = bmi_category_entry,
+    values_from = cell,
+    values_fill = "-"
+  ) |>
+  rename(`Pre-war category` = bmi_category_prewar) |>
+  kable()
+```
+
+## BMI trend during follow-up
+
+Among `r n_distinct(longitudinal$id)` participants with two or more measurements (`r nrow(longitudinal)` observations).
+Two participants were excluded for an implausible between-visit rate of BMI change (\>= 1 kg/m2 per day).
+
+The model is a linear mixed model, `BMI ~ days since entry + entry cohort + (1 | id)`.
+Time is measured from each participant's own entry, so the slope is within-person change.
+Entry cohort absorbs the difference in starting point between early and late joiners.
+
+Fitted twice: by maximum likelihood with `lme4`, and by posterior sampling with `rstanarm`.
+Priors are the rstanarm defaults, which are weakly informative and rescaled to the data: a `normal(0, 2.5)` prior on each coefficient and on the intercept, scaled by the standard deviations of outcome and predictor, and an `exponential(1)` prior on the residual standard deviation, scaled by the standard deviation of the outcome.
+On `r nrow(longitudinal)` observations these priors are dominated by the likelihood; they exist to regularise, not to contribute information.
+
+```{r}
+#| label: longitudinal-models
+
+lmm_bmi_time <- lmer(
+  bmi ~ days_since_entry + entry_cohort + (1 | id),
+  data = longitudinal
+)
+
+slope_ci <- confint(
+  lmm_bmi_time,
+  method = "profile",
+  parm = "days_since_entry"
+)
+
+# Rescale the daily slope to BMI change per 30 days
+lmm_slope <- tidy(lmm_bmi_time, effects = "fixed") |>
+  filter(term == "days_since_entry") |>
+  transmute(
+    estimate_per_30d = estimate * days_per_month,
+    conf.low_per_30d = slope_ci[1] * days_per_month,
+    conf.high_per_30d = slope_ci[2] * days_per_month
+  )
+
+lmm_r2 <- r2(lmm_bmi_time)
+
+# Effect modification by age group: the draft claims under-30s regained faster
+lmm_bmi_time_age <- lmer(
+  bmi ~ days_since_entry * age + entry_cohort + (1 | id),
+  data = longitudinal
+)
+
+lmm_age <- tidy(lmm_bmi_time_age, effects = "fixed", conf.int = TRUE) |>
+  filter(str_detect(term, "days_since_entry")) |>
+  transmute(
+    term,
+    estimate_per_30d = estimate * days_per_month,
+    conf.low_per_30d = conf.low * days_per_month,
+    conf.high_per_30d = conf.high * days_per_month,
+    statistic
+  )
+```
+
+```{r}
+#| label: bayes-longitudinal-models
+
+bayes_bmi_time <- stan_lmer(
+  bmi ~ days_since_entry + entry_cohort + (1 | id),
+  data = longitudinal,
+  chains = n_chains,
+  iter = n_iter,
+  seed = stan_seed,
+  refresh = 0
+)
+
+bayes_bmi_time_age <- stan_lmer(
+  bmi ~ days_since_entry * age + entry_cohort + (1 | id),
+  data = longitudinal,
+  chains = n_chains,
+  iter = n_iter,
+  seed = stan_seed,
+  refresh = 0
+)
+
+# Convergence: R-hat should be at or below 1.01 and bulk ESS in the thousands
+sampler_diagnostics <- map(
+  list(
+    `BMI ~ time + cohort` = bayes_bmi_time,
+    `BMI ~ time * age + cohort` = bayes_bmi_time_age
+  ),
+  \(fit) {
+    summary_matrix <- summary(fit)
+    tibble(
+      max_rhat = max(summary_matrix[, "Rhat"], na.rm = TRUE),
+      min_ess = min(summary_matrix[, "n_eff"], na.rm = TRUE),
+      divergences = sum(rstan::get_divergent_iterations(fit$stanfit))
+    )
+  }
+) |>
+  list_rbind(names_to = "model")
+
+# A clinically meaningful rate of recovery, taken from the same NICE threshold
+# used for loss: regaining 5% of body weight over six months. Converted to a
+# BMI change per 30 days at this sample's median height and entry weight, so the
+# threshold comes from the data rather than being asserted.
+median_height <- median(longitudinal$height, na.rm = TRUE)
+median_weight_entry <- median(longitudinal$weight_entry, na.rm = TRUE)
+meaningful_gain_30d <- (0.05 * median_weight_entry / 6) / median_height^2
+
+slope_thresholds <- c(`P(recovery)` = 0, `P(meaningful)` = meaningful_gain_30d)
+
+bayes_slope <- slope_draws(bayes_bmi_time, "days_since_entry") |>
+  summarise_draws(slope_thresholds)
+
+# Variance components, which lme4 reports without any measure of uncertainty
+bayes_variance <- as.matrix(
+  bayes_bmi_time,
+  regex_pars = c("^Sigma\\[id", "^sigma$")
+) |>
+  as_tibble() |>
+  rename(var_id = 1, sigma = 2) |>
+  transmute(sd_random_intercept = sqrt(var_id), sd_residual = sigma) |>
+  pivot_longer(everything(), names_to = "component", values_to = "draw") |>
+  group_by(component) |>
+  summarise(
+    median = median(draw),
+    conf.low = quantile(draw, 0.025),
+    conf.high = quantile(draw, 0.975),
+    .groups = "drop"
+  )
+```
+
+```{r}
+#| label: tbl-sampler
+#| tbl-cap: >-
+#|   Sampler diagnostics for the two mixed models.
+#|   R-hat at or below 1.01 with no divergent transitions indicates the chains converged and the posterior is being explored properly.
+
+sampler_diagnostics |>
+  transmute(
+    Model = model,
+    `Max R-hat` = sprintf("%.3f", max_rhat),
+    `Min effective sample size` = round(min_ess),
+    `Divergent transitions` = divergences
+  ) |>
+  kable()
+```
+
+```{r}
+#| label: tbl-lmm
+#| tbl-cap: >-
+#|   Within-person BMI change during follow-up, per 30 days, from both fits.
+#|   The maximum likelihood row carries a 95% confidence interval; the Bayesian row a 95% credible interval.
+
+bind_rows(
+  lmm_slope |>
+    transmute(
+      Fit = "Maximum likelihood (lme4)",
+      `Estimate (95% interval)` = fmt_ci(
+        estimate_per_30d,
+        conf.low_per_30d,
+        conf.high_per_30d,
+        3
+      )
+    ),
+  bayes_slope |>
+    transmute(
+      Fit = "Posterior (rstanarm)",
+      `Estimate (95% interval)` = fmt_ci(median, conf.low, conf.high, 3)
+    )
+) |>
+  kable()
+```
+
+The posterior answers the question the paper actually asks.
+
+```{r}
+#| label: tbl-lmm-probabilities
+#| tbl-cap: >-
+#|   Posterior probabilities for the within-person BMI slope.
+#|   The meaningful threshold is the rate that would regain 5% of body weight over six months, the mirror of the NICE loss criterion, evaluated at this sample's median height and entry weight.
+
+bayes_slope |>
+  transmute(
+    `Median gain per 30 days (95% CrI)` = fmt_ci(median, conf.low, conf.high, 3),
+    `P(BMI rising)` = fmt_prob(`P(recovery)`),
+    `Meaningful rate (kg/m2 per 30 days)` = sprintf(
+      "%.3f",
+      meaningful_gain_30d
+    ),
+    `P(gain exceeds meaningful rate)` = fmt_prob(`P(meaningful)`)
+  ) |>
+  kable()
+```
+
+```{r}
+#| label: fig-slope-posterior
+#| fig-cap: >-
+#|   Posterior for the within-person BMI slope, per 30 days.
+#|   The dashed line is no change; the solid line is the clinically meaningful rate of recovery.
+#| fig-height: 3
+#| fig-width: 7
+
+tibble(draw = slope_draws(bayes_bmi_time, "days_since_entry")) |>
+  ggplot(aes(x = draw)) +
+  geom_density(fill = "#01454f", colour = NA, alpha = 0.6) +
+  geom_vline(xintercept = 0, linetype = 2, colour = "grey30") +
+  geom_vline(xintercept = meaningful_gain_30d, colour = "#ffa600") +
+  labs(x = "BMI change per 30 days (kg/m2)", y = NULL)
+```
+
+```{r}
+#| label: tbl-lmm-fit
+#| tbl-cap: >-
+#|   Variance components, with 95% credible intervals from the posterior.
+#|   The random intercept SD is much larger than the residual SD because BMI varies far more between participants than within them over four months; marginal R2 is correspondingly small.
+#|   lme4 reports these two standard deviations as point estimates with no uncertainty attached, which is the practical gain here.
+
+bind_rows(
+  bayes_variance |>
+    mutate(
+      Component = if_else(
+        component == "sd_random_intercept",
+        "SD between participants",
+        "SD within participants (residual)"
+      ),
+      `Posterior median (95% CrI)` = fmt_ci(median, conf.low, conf.high, 2),
+      .keep = "none"
+    )
+) |>
+  kable()
+```
+
+```{r}
+#| label: tbl-lmm-r2
+#| tbl-cap: "Sample size and variance explained, from the maximum likelihood fit."
+
+tibble(
+  Participants = n_distinct(longitudinal$id),
+  Observations = nrow(longitudinal),
+  `R2 marginal` = sprintf("%.3f", as.numeric(lmm_r2$R2_marginal)),
+  `R2 conditional` = sprintf("%.3f", as.numeric(lmm_r2$R2_conditional))
+) |>
+  kable()
+```
+
+Assumption-free companion.
+Among participants who entered in August-September and were still measured in October-November, the within-person change between first and last measurement:
+
+```{r}
+#| label: paired-change
+
+paired <- longitudinal |>
+  filter(entry_cohort == "Aug-Sep 2025") |>
+  group_by(id) |>
+  filter(max(record_date) >= as_date("2025-10-01")) |>
+  arrange(record_date, .by_group = TRUE) |>
+  summarise(
+    bmi_first = first(bmi),
+    bmi_last = last(bmi),
+    days_between = as.numeric(last(record_date) - first(record_date)),
+    .groups = "drop"
+  ) |>
+  mutate(bmi_diff = bmi_last - bmi_first)
+
+paired_change <- tidy(t.test(paired$bmi_diff)) |>
+  transmute(
+    n = nrow(paired),
+    median_days_between = median(paired$days_between),
+    mean_bmi_change = estimate,
+    conf.low,
+    conf.high,
+    p.value
+  )
+```
+
+```{r}
+#| label: bayes-paired-change
+
+# Intercept-only model on the within-person differences: the Bayesian
+# counterpart of the one-sample t-test above
+bayes_paired <- stan_glm(
+  bmi_diff ~ 1,
+  data = paired,
+  chains = n_chains,
+  iter = n_iter,
+  seed = stan_seed,
+  refresh = 0
+)
+
+bayes_paired_change <- as.numeric(as.matrix(bayes_paired, pars = "(Intercept)")) |>
+  summarise_draws(c(`P(> 0)` = 0))
+```
+
+```{r}
+#| label: tbl-paired
+#| tbl-cap: "Paired within-person BMI change, Aug-Sep entrants measured again in Oct-Nov, from both fits."
+
+bind_rows(
+  paired_change |>
+    transmute(
+      Fit = "One-sample t-test",
+      `Change (95% interval)` = fmt_ci(
+        mean_bmi_change,
+        conf.low,
+        conf.high,
+        2
+      ),
+      Evidence = paste0("p = ", fmt_p(p.value))
+    ),
+  bayes_paired_change |>
+    transmute(
+      Fit = "Posterior (rstanarm)",
+      `Change (95% interval)` = fmt_ci(median, conf.low, conf.high, 2),
+      Evidence = paste0("P(> 0) = ", fmt_prob(`P(> 0)`))
+    )
+) |>
+  mutate(
+    N = nrow(paired),
+    `Median days between` = median(paired$days_between),
+    .before = 1
+  ) |>
+  kable()
+```
+
+This cannot be confounded by who joined when, so it carries the recovery claim.
+
+```{r}
+#| label: bayes-age-interaction
+
+age_terms <- lmm_age$term
+
+bayes_age <- map(age_terms, \(term) {
+  slope_draws(bayes_bmi_time_age, term) |>
+    summarise_draws(c(`P(> 0)` = 0)) |>
+    mutate(term = term, .before = 1)
+}) |>
+  list_rbind()
+```
+
+```{r}
+#| label: tbl-lmm-age
+#| tbl-cap: >-
+#|   Effect modification of the BMI slope by age group, per 30 days, reference age under 30.
+#|   The first row is the reference slope itself; the remaining rows are differences from it.
+#|   P is the posterior probability that the term is greater than zero: a value near 0.5 means the data are uninformative about the direction, which is what the frequentist version could only express as a caveat.
+
+bayes_age |>
+  transmute(
+    Term = if_else(
+      term == "days_since_entry",
+      "Slope, age under 30 (reference)",
+      paste0("Difference in slope, ", str_remove(term, "days_since_entry:age"))
+    ),
+    `Posterior median (95% CrI)` = fmt_ci(median, conf.low, conf.high, 3),
+    `P(> 0)` = fmt_prob(`P(> 0)`)
+  ) |>
+  kable()
+```
+
+```{r}
+#| label: tbl-lmm-age-compare
+#| tbl-cap: "The same age terms from the maximum likelihood fit, for comparison."
+
+lmm_age |>
+  transmute(
+    Term = if_else(
+      term == "days_since_entry",
+      "Slope, age under 30 (reference)",
+      paste0("Difference in slope, ", str_remove(term, "days_since_entry:age"))
+    ),
+    `Estimate (95% CI)` = fmt_ci(
+      estimate_per_30d,
+      conf.low_per_30d,
+      conf.high_per_30d,
+      3
+    ),
+    `t` = sprintf("%.2f", statistic)
+  ) |>
+  kable()
+```
+
+```{r}
+#| label: fig-trajectories
+#| fig-cap: >-
+#|   Individual BMI trajectories by calendar date among participants with two or more measurements.
+#|   Each grey line is one participant; the orange line is the mixed model fit with its 95% confidence band.
+
+longitudinal |>
+  ggplot(aes(x = as.Date(record_date), y = bmi)) +
+  geom_line(aes(group = id), alpha = 0.3, colour = "#01454f") +
+  geom_point(alpha = 0.3, size = 1, colour = "#01454f") +
+  geom_smooth(
+    method = "lm",
+    se = TRUE,
+    colour = "#ffa600",
+    fill = "#ffa600",
+    alpha = 0.15
+  ) +
+  labs(x = "Date of measurement", y = "BMI")
+```
+
+### Sensitivity: generalised additive model
+
+The dashboard figure uses a GAM with thin-plate smooths for date and pre-war BMI and a random effect for participant.
+Refitted here for its fit statistics.
+If the date smooth has effective degrees of freedom near 1, the linear slope in the mixed model is adequate.
+
+```{r}
+#| label: gam-sensitivity
+
+gam_data <- longitudinal |>
+  filter(!is.na(bmi_prewar)) |>
+  mutate(day = as.integer(record_date), bmi_log = log(bmi))
+
+gam_bmi_time <- gam(
+  bmi_log ~ s(day, bs = "tp") + s(bmi_prewar, bs = "tp") + s(id, bs = "re"),
+  data = gam_data,
+  family = "gaussian"
+)
+
+gam_summary <- summary(gam_bmi_time)
+
+gam_results <- tibble(
+  term = rownames(gam_summary$s.table),
+  edf = gam_summary$s.table[, "edf"],
+  p.value = gam_summary$s.table[, "p-value"],
+  n_observations = nrow(gam_data),
+  deviance_explained = gam_summary$dev.expl,
+  adj_r_squared = gam_summary$r.sq
+)
+```
+
+```{r}
+#| label: tbl-gam
+#| tbl-cap: >-
+#|   GAM smooth terms.
+#|   An effective degrees of freedom of 1 for the date smooth means the relationship is linear over the observed window, so the mixed model slope above is adequate and is reported as the primary result.
+
+gam_results |>
+  transmute(
+    Term = term,
+    `Effective df` = sprintf("%.2f", edf),
+    `p` = fmt_p(p.value)
+  ) |>
+  kable()
+```
+
+Deviance explained `r fmt_pct(100 * gam_results$deviance_explained[1])`, adjusted R-squared `r sprintf("%.3f", gam_results$adj_r_squared[1])`, on `r gam_results$n_observations[1]` observations.
+Most of this is the participant random effect (effective df `r sprintf("%.0f", gam_results$edf[gam_results$term == "s(id)"])`), not the date smooth.
+
+## Selection and measurement checks
+
+Two participant groupings are compared against baseline characteristics.
+Entry cohort asks whether the smaller weight loss among later joiners is recovery or a different sample.
+Follow-up asks whether the participants with repeat measures represent the whole sample.
+
+Both are equivalence claims: the argument being made is that the groups are similar enough that the comparison is not driven by composition.
+A non-significant t-test cannot support that claim, because failing to reject a null is not evidence for it.
+The t-tests are kept below for continuity with the draft, and each continuous comparison is additionally given an equivalence test against a region of practical equivalence.
+
+```{r}
+#| label: selection-checks
+
+compare_categorical <- function(data, variable_name) {
+  counts <- data |>
+    filter(!is.na(.data[[variable_name]])) |>
+    count(group_level = .group, level = .data[[variable_name]]) |>
+    group_by(group_level) |>
+    mutate(pct = 100 * n / sum(n)) |>
+    ungroup()
+
+  contingency_table <- table(data$.group, data[[variable_name]])
+
+  counts |>
+    mutate(
+      variable = variable_name,
+      variable_label = variable_labels[[variable_name]],
+      p.value = suppressWarnings(chisq.test(contingency_table)$p.value)
+    )
+}
+
+compare_continuous <- function(data, variable_name) {
+  test <- t.test(reformulate(".group", variable_name), data = data)
+  group_levels <- levels(factor(data$.group))
+
+  tibble(
+    variable = variable_name,
+    variable_label = variable_labels[[variable_name]],
+    level = "mean",
+    group_level = group_levels,
+    mean = as.numeric(test$estimate),
+    # t.test reports level1 - level2; the table reports level2 - level1
+    difference = test$estimate[[2]] - test$estimate[[1]],
+    conf.low = -test$conf.int[2],
+    conf.high = -test$conf.int[1],
+    p.value = test$p.value
+  )
+}
+
+compare_groups <- function(data, group_var, comparison_label) {
+  data <- data |>
+    mutate(.group = .data[[group_var]]) |>
+    filter(!is.na(.group))
+  stopifnot(length(levels(factor(data$.group))) == 2)
+
+  bind_rows(
+    map(
+      c("age", "sex", "governorate_cat", "children", "role_cat"),
+      \(variable_name) compare_categorical(data, variable_name)
+    ) |>
+      list_rbind(),
+    map(
+      c("bmi_prewar", "bmi_entry", "pct_weight_change", "age_years"),
+      \(variable_name) compare_continuous(data, variable_name)
+    ) |>
+      list_rbind()
+  ) |>
+    mutate(comparison = comparison_label, .before = 1)
+}
+
+selection_checks <- bind_rows(
+  compare_groups(baseline, "entry_cohort", "Entry cohort"),
+  compare_groups(
+    mutate(
+      baseline,
+      followup = factor(
+        if_else(has_followup, "2+ observations", "Single observation"),
+        levels = c("Single observation", "2+ observations")
+      )
+    ),
+    "followup",
+    "Follow-up"
+  )
+)
+
+table_comparison_continuous <- function(comparison_label) {
+  selection_checks |>
+    filter(comparison == comparison_label, !is.na(difference)) |>
+    mutate(value = sprintf("%.2f", mean)) |>
+    select(
+      Variable = variable_label,
+      group_level,
+      value,
+      difference,
+      conf.low,
+      conf.high,
+      p.value
+    ) |>
+    pivot_wider(names_from = group_level, values_from = value) |>
+    mutate(
+      `Difference (95% CI)` = fmt_ci(difference, conf.low, conf.high, 2),
+      `p` = fmt_p(p.value),
+      .keep = "unused"
+    ) |>
+    kable()
+}
+
+table_comparison_categorical <- function(comparison_label) {
+  selection_checks |>
+    filter(comparison == comparison_label, is.na(difference)) |>
+    mutate(cell = sprintf("%d (%.0f%%)", n, pct)) |>
+    select(
+      Characteristic = variable_label,
+      Level = level,
+      group_level,
+      cell,
+      p.value
+    ) |>
+    pivot_wider(names_from = group_level, values_from = cell) |>
+    mutate(`p` = fmt_p(p.value), .keep = "unused") |>
+    kable()
+}
+```
+
+```{r}
+#| label: bayes-equivalence
+
+# One two-group model per continuous characteristic, then an equivalence test
+# of the group difference against a region of practical equivalence. The ROPE is
+# bayestestR's default convention, +/- 0.1 standard deviations of the outcome,
+# which is Kruschke's negligible-effect range; it is reported in the table so it
+# can be judged rather than taken on trust.
+equivalence_one <- function(data, group_var, variable_name, comparison_label) {
+  model_data <- data |>
+    mutate(.group = .data[[group_var]]) |>
+    filter(!is.na(.group), !is.na(.data[[variable_name]]))
+
+  fit <- stan_glm(
+    reformulate(".group", variable_name),
+    data = model_data,
+    chains = n_chains,
+    iter = n_iter,
+    seed = stan_seed,
+    refresh = 0
+  )
+
+  # The single non-intercept coefficient is the between-group difference
+  group_term <- setdiff(names(coef(fit)), "(Intercept)")
+  result <- equivalence_test(fit, parameters = group_term)
+
+  tibble(
+    comparison = comparison_label,
+    variable = variable_name,
+    variable_label = variable_labels[[variable_name]],
+    rope_low = result$ROPE_low,
+    rope_high = result$ROPE_high,
+    pct_in_rope = result$ROPE_Percentage * 100,
+    conf.low = result$CI_low,
+    conf.high = result$CI_high,
+    decision = result$ROPE_Equivalence
+  )
+}
+
+continuous_characteristics <- c(
+  "bmi_prewar",
+  "bmi_entry",
+  "pct_weight_change",
+  "age_years"
+)
+
+baseline_followup <- baseline |>
+  mutate(
+    followup = factor(
+      if_else(has_followup, "2+ observations", "Single observation"),
+      levels = c("Single observation", "2+ observations")
+    )
+  )
+
+equivalence_checks <- bind_rows(
+  map(
+    continuous_characteristics,
+    \(variable_name) {
+      equivalence_one(baseline, "entry_cohort", variable_name, "Entry cohort")
+    }
+  ) |>
+    list_rbind(),
+  map(
+    continuous_characteristics,
+    \(variable_name) {
+      equivalence_one(
+        baseline_followup,
+        "followup",
+        variable_name,
+        "Follow-up"
+      )
+    }
+  ) |>
+    list_rbind()
+)
+
+table_equivalence <- function(comparison_label) {
+  equivalence_checks |>
+    filter(comparison == comparison_label) |>
+    transmute(
+      Characteristic = variable_label,
+      `Difference, 95% CrI` = sprintf("%.2f to %.2f", conf.low, conf.high),
+      ROPE = sprintf("%.2f to %.2f", rope_low, rope_high),
+      `% of posterior in ROPE` = fmt_pct(pct_in_rope),
+      Verdict = decision
+    ) |>
+    kable()
+}
+```
+
+### Entry cohort comparison
+
+```{r}
+#| label: tbl-cohort-continuous
+#| tbl-cap: >-
+#|   Continuous baseline characteristics by entry cohort.
+#|   Difference is Oct-Nov minus Aug-Sep.
+
+table_comparison_continuous("Entry cohort")
+```
+
+```{r}
+#| label: tbl-cohort-equivalence
+#| tbl-cap: >-
+#|   Equivalence test of the same characteristics by entry cohort.
+#|   ROPE is the region of practical equivalence, +/- 0.1 standard deviations of the characteristic.
+#|   "Accepted" means the whole 95% credible interval falls inside that region, so the groups can be treated as equivalent; "Rejected" means it falls entirely outside; "Undecided" means the data cannot distinguish the two.
+
+table_equivalence("Entry cohort")
+```
+
+The two cohorts had effectively identical pre-war BMI but differed at entry, which points to a period effect rather than to the later wave being a systematically lighter or heavier sample.
+The equivalence test is what licenses the first half of that sentence: pre-war BMI is not merely non-significant, it is inside the region of practical equivalence.
+
+```{r}
+#| label: tbl-cohort-categorical
+#| tbl-cap: "Categorical baseline characteristics by entry cohort."
+
+table_comparison_categorical("Entry cohort")
+```
+
+### Follow-up comparison
+
+```{r}
+#| label: tbl-followup-continuous
+#| tbl-cap: >-
+#|   Continuous baseline characteristics by whether a participant contributed repeat measurements.
+#|   Difference is 2+ observations minus single observation.
+
+table_comparison_continuous("Follow-up")
+```
+
+```{r}
+#| label: tbl-followup-equivalence
+#| tbl-cap: >-
+#|   Equivalence test of the same characteristics by whether a participant contributed repeat measurements.
+#|   This is the test that matters for generalising the follow-up results to the full sample.
+
+table_equivalence("Follow-up")
+```
+
+```{r}
+#| label: tbl-followup-categorical
+#| tbl-cap: "Categorical baseline characteristics by whether a participant contributed repeat measurements."
+
+table_comparison_categorical("Follow-up")
+```
+
+### Digit preference in recalled pre-war weight
+
+Recalled pre-war weight against measured weight at entry.
+Both are heaped on whole kilograms, so the measured value is not a clean reference: scales and recorders round too.
+The excess heaping in the recalled value over the measured one is what quantifies how much coarser recall was.
+
+```{r}
+#| label: digit-preference
+
+is_whole_kg <- function(weight) abs(weight - round(weight)) < 1e-8
+
+digit_preference <- cross_sectional |>
+  select(id, Recalled = weight_prewar, Measured = weight_entry) |>
+  pivot_longer(
+    c(Recalled, Measured),
+    names_to = "source",
+    values_to = "weight"
+  ) |>
+  filter(!is.na(weight)) |>
+  group_by(source) |>
+  summarise(
+    n = n(),
+    pct_whole_kg = 100 * mean(is_whole_kg(weight)),
+    pct_ends_0_or_5_kg = 100 *
+      mean(is_whole_kg(weight) & round(weight) %% 5 == 0),
+    pct_ends_0_kg = 100 *
+      mean(is_whole_kg(weight) & round(weight) %% 10 == 0),
+    .groups = "drop"
+  )
+```
+
+```{r}
+#| label: tbl-digits
+#| tbl-cap: "Rounding in recalled pre-war weight compared with measured weight at entry."
+
+digit_preference |>
+  transmute(
+    Source = source,
+    N = n,
+    `Whole kg` = fmt_pct(pct_whole_kg),
+    `Ends in 0 or 5 kg` = fmt_pct(pct_ends_0_or_5_kg),
+    `Ends in 0 kg` = fmt_pct(pct_ends_0_kg)
+  ) |>
+  kable()
+```
+
+### Comparison with the 2020 representative survey
+
+```{r}
+#| label: external-comparison
+
+# The aggregated file carries means only, so SDs for the published column must
+# come from the paper: flagged rather than fabricated.
+survey_2020 <- read_csv(
+  here("data", "raw", "gaza_survey2020_kcal_bmi_agg.csv"),
+  show_col_types = FALSE
+) |>
+  transmute(
+    age_band = age_cat,
+    sex = if_else(gender == "f", "Female", "Male"),
+    bmi_2020 = weight / height^2,
+    sd_bmi_2020 = NA_real_
+  )
+
+external_comparison <- cross_sectional |>
+  filter(!is.na(age_years), age_years >= 40, !is.na(bmi_prewar)) |>
+  mutate(
+    age_band = cut(
+      age_years,
+      breaks = c(40, 50, 60, 70, 120),
+      right = FALSE,
+      labels = c("[40,50)", "[50,60)", "[60,70)", "[70,120]")
+    )
+  ) |>
+  group_by(age_band, sex) |>
+  summarise(
+    n_this_study = n(),
+    mean_bmi_prewar = mean(bmi_prewar),
+    sd_bmi_prewar = sd(bmi_prewar),
+    .groups = "drop"
+  ) |>
+  mutate(age_band = as.character(age_band), sex = as.character(sex)) |>
+  left_join(survey_2020, by = c("age_band", "sex"))
+```
+
+```{r}
+#| label: tbl-external
+#| tbl-cap: "Pre-war BMI in this study compared with the 2020 cross-sectional survey (Hamad et al.), by age band and sex."
+
+external_comparison |>
+  transmute(
+    `Age band` = age_band,
+    Sex = sex,
+    `This study, n` = n_this_study,
+    `This study, mean BMI (SD)` = sprintf(
+      "%.1f (%.1f)",
+      mean_bmi_prewar,
+      sd_bmi_prewar
+    ),
+    `2020 survey, mean BMI` = sprintf("%.1f", bmi_2020),
+    `2020 survey, SD` = if_else(
+      is.na(sd_bmi_2020),
+      "not in aggregated file",
+      sprintf("%.1f", sd_bmi_2020)
+    )
+  ) |>
+  kable()
+```
+
+The aggregated 2020 file carries means only.
+SDs for the published column have to come from the paper or from whoever holds the microdata.
