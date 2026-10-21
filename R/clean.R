@@ -51,6 +51,7 @@ bmi_to_category <- function(bmi) {
 # Plausible-range limits for anomaly flagging
 limits <- list(
   weight = c(30, 180), # kg
+  height = c(140, 210), # cm
   bmi = c(10, 60), # kg/m^2
   age = c(16, 99), # years
   children = c(0, 20), # dependent children
@@ -416,7 +417,9 @@ data <- data |>
     record_remove = case_when(
       record_remove != "include" ~ record_remove,
       is.na(weight) ~ "invalid_missing",
+      is.na(weight_prewar) ~ "invalid_no_prewar",
       !between(weight, limits$weight[1], limits$weight[2]) ~ "invalid_anomaly_weight",
+      !between(height, limits$height[1], limits$height[2]) ~ "invalid_anomaly_height",
       !between(bmi, limits$bmi[1], limits$bmi[2]) ~ "invalid_anomaly_bmi",
       abs(weight_pct_daily_rate) >= limits$daily_rate ~ "invalid_anomaly_rate",
       TRUE ~ "include"
@@ -467,7 +470,9 @@ reason_levels <- c(
   "invalid_no_baseline"    = "No baseline data",
   "invalid_double_entry"   = "Duplicate record (same participant/day)",
   "invalid_missing"        = "Missing weight measurement",
+  "invalid_no_prewar"      = "Missing pre-war weight",
   "invalid_anomaly_weight" = "Weight outside 30-180 kg",
+  "invalid_anomaly_height" = "Height outside 140-210 cm",
   "invalid_anomaly_bmi"    = "BMI outside 10-60",
   "invalid_anomaly_rate"   = "Weight change >10%/day since entry",
   "include"                = "Included in analysis"

@@ -1,0 +1,367 @@
+---
+title: "Supplementary information"
+subtitle: "Participatory surveillance of adult weight among humanitarian staff in the Gaza Strip, 2025"
+bibliography: gaza.bib
+crossref:
+  fig-title: "Figure S"
+  tbl-title: "Table S"
+  fig-prefix: "Figure S"
+  tbl-prefix: "Table S"
+  title-delim: "."
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+  docx:
+    toc: false
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+
+source(here::here("R", "utils.R"))
+source(here::here("R", "data.R"))
+source(here::here("R", "participation.R"))
+source(here::here("R", "prewar.R"))
+source(here::here("R", "followup.R"))
+source(here::here("R", "context.R"))
+```
+
+<!-- The manuscript types S-numbers by hand: recheck them if a table or figure here moves. -->
+
+Katharine Sherratt, Kevin van Zandvoort, Zeina Jamaluddine, Clara Brigitta, Ciara McCarthy, Ciara Judge, Catharina van der Boor, Francesco Checchi
+
+## Participation and data collection
+
+We collected weight data in two Open Data Kit forms: an enrolment form carrying all characteristics, and a follow-up form carrying date and weight only, both identified by the participant's anonymised ID.
+
+### Recruitment and selection
+
+Participants enrolled in two cohorts, August-September and October-November 2025 (Figure 1B of the manuscript).
+
+We assessed selection by reporting distributions of enrolment characteristics across subgroups: enrolment cohort, and whether participants provided one or multiple measurements over time.
+
+```{r}
+#| label: tbl-balance-cohort
+#| tbl-cap: "Enrolment characteristics by enrolment cohort."
+
+tbl_balance_cohort |>
+  as_flex_table()
+```
+
+```{r}
+#| label: tbl-balance-followup
+#| tbl-cap: "Enrolment characteristics by whether the participant contributed any follow-up measurement."
+
+tbl_balance_followup |>
+  as_flex_table()
+```
+
+We modelled the odds of contributing any follow-up measurement by participant characteristic (age, sex, residence, dependent children, role, BMI at enrolment and enrolment cohort) with logistic regression.
+
+```{r}
+#| label: tbl-return
+#| tbl-cap: "Odds of contributing at least one follow-up measurement, by participant characteristic at enrolment."
+
+fit_return |>
+  tbl_regression(exponentiate = TRUE, label = labels_for(return_vars)) |>
+  modify_column_hide("p.value") |>
+  as_flex_table()
+```
+
+Change since pre-war was similar among participants who did or did not contribute follow-up measurements (mean loss 16.5% and 15.3% respectively).
+Participants with dependent children had higher odds of returning than those with none (odds ratio 2.20 (1.09 to 4.42) for one child, similar for two or more), and residents of Gaza City and North Gaza lower odds than residents of Deir Al Balah (0.45 (0.22 to 0.87)).
+Participants in the October-November cohort had much lower odds of returning (0.18 (0.10 to 0.33)).
+
+### Exclusion criteria
+
+Exclusions were dominated by 214 (20%) follow-up records that we could not link to a previously enrolled participant (see below).
+We also excluded 148 records as duplicates, 37 that refused consent, and 6 for a missing or implausible value.
+
+```{r}
+#| label: tbl-exclusions
+#| tbl-cap: >-
+#|   Weight measurements by exclusion criterion.
+
+exclusions |>
+  transmute(
+    `Criteria` = reason,
+    Measurements = n_records,
+    Participants = n_participants,
+    `Measurements remaining` = n_remaining,
+    `Participants remaining` = n_participants_remaining
+  ) |>
+  ft()
+```
+
+#### Unlinked follow-up measurements
+
+We collected 570 follow-up records.
+Among valid records, 214 (from 202 participant IDs) did not match any enrolment record participant ID, so we could not identify these with pre-war weight, height or demographics.
+Almost all of these unlinked measurements came after the second round of recruitment (86% appeared over 8-12 November 2025; Figure 1B of the manuscript).
+
+These may be participants who entered a different ID combination from their enrolment ID, or who only ever used the follow-up form without enrolling.
+Linkage failure was likely partly due to mistyped composite IDs: 68% of follow-up records with a composite ID were unmatched, against 14% of those with a national ID.
+All identifiers were stored only as one-way hashes, so mistyped IDs could not be corrected.
+At least some of these records also come from people who only ever used the follow-up form; in the 8-12 November week we saw more unmatched composite IDs (157) than there were participants ever enrolled with a composite ID (137).
+Unlinked measurements were also heavier than linked follow-up measurements (median 71 against 66 kg).
+
+## Analysis
+
+### Change over conflict period
+
+```{r}
+#| label: tbl-headline
+#| tbl-cap: "Mean change from self-recalled pre-war (October 2023) weight to the first measured weight at enrolment."
+
+tbl_change |>
+  as_flex_table()
+```
+
+```{r}
+#| label: tbl-loss-by-bmi
+#| tbl-cap: "Mean (95% CI) weight lost from pre-war to enrolment by pre-war BMI category, in kilograms and as a percentage of pre-war weight, with the number underweight (BMI < 18.5 kg/m2) at enrolment."
+
+tbl_loss_by_bmi |>
+  as_flex_table()
+```
+
+```{r}
+#| label: fig-bmi-pyramid
+#| fig-cap: >-
+#|   Participants by BMI category, age band and sex, pre-war (recalled) and at enrolment (measured).
+#| fig-width: 8
+#| fig-height: 4.5
+
+bmi_pyramid_plot <- bmi_category_long |>
+  filter(!is.na(sex), !is.na(age)) |>
+  count(period, sex, age, bmi_category) |>
+  mutate(n_signed = if_else(sex == "Male", -n, n)) |>
+  ggplot(aes(x = n_signed, y = age, fill = bmi_category)) +
+  geom_col() +
+  geom_vline(xintercept = 0, colour = "#01454f", linewidth = 0.3) +
+  scale_x_continuous(labels = abs) +
+  scale_fill_viridis_d(direction = -1, name = "BMI category", drop = FALSE) +
+  facet_wrap(~period) +
+  labs(x = "Participants  (Male <- | -> Female)", y = NULL)
+
+save_fig(bmi_pyramid_plot, "figS1-bmi-pyramid", width = 8, height = 4.5)
+```
+
+### Change since pre-war standardised to adults in the Gaza Strip
+
+We asked what mean weight change, mean BMI change and the prevalence of underweight at enrolment would be among adults in the Gaza Strip, if each sex and age group had the mean observed among study participants of that group.
+We used direct standardisation, as the mean within each sex and age group (under 30, 30-45, over 45), weighted by that group's share of the population.
+The population was the projected mid-2025 population of the Gaza Strip aged 18-65, by sex and single year of age, from the December 2025 release of the International Database [@uscensusbureauInternationalDatabase2025].
+It is projected from the 2017 census and is not adjusted for deaths or displacement during the war.
+Participants were aged 19-65.
+We excluded 17 participants with no recorded age (n = 417).
+We took 95% intervals as percentiles of 2000 bootstrap resamples of participants, holding population shares fixed.
+
+```{r}
+#| label: tbl-standardised
+#| tbl-cap: >-
+#|   Change from pre-war to enrolment and underweight (BMI < 18.5 kg/m2) at enrolment, by sex and age group, among participants and standardised to adults in the Gaza Strip.
+#|   Standardised: the mean in each sex and age group, weighted by that group's share of the projected mid-2025 population aged 18-65 (US Census Bureau International Database), which is not adjusted for deaths or displacement during the war.
+#|   95% intervals from 2000 bootstrap resamples of participants, with population shares held fixed.
+
+standardised_row <- function(row) {
+  estimates <- change_standardised |>
+    filter(population == row) |>
+    mutate(text = fmt_ci(estimate, low, high, if_else(outcome == "bmi_change", 2, 1)))
+  set_names(estimates$text, estimates$outcome)
+}
+
+bind_rows(
+  standard_cells(standard_set) |>
+    mutate(age = factor(age, levels = age_levels)) |>
+    arrange(sex, age) |>
+    transmute(
+      group = paste0(sex, ", ", str_to_lower(str_remove(age, "Age "))),
+      participants = sprintf("%d (%.0f%%)", n, 100 * participant_share),
+      gaza = sprintf("%.0f%%", 100 * population_share),
+      pct_weight_change = sprintf("%.1f", pct_weight_change),
+      bmi_change = sprintf("%.2f", bmi_change),
+      pct_underweight_entry = sprintf("%.1f", pct_underweight_entry)
+    ),
+  tibble(
+    group = "All participants",
+    participants = sprintf("%d (100%%)", nrow(standard_set)),
+    gaza = "",
+    !!!standardised_row("observed")
+  ),
+  tibble(
+    group = "Standardised to adults in the Gaza Strip",
+    participants = "",
+    gaza = "100%",
+    !!!standardised_row("standardised")
+  )
+) |>
+  select(
+    `Sex and age` = group,
+    `Participants, n (%)` = participants,
+    `Adults in the Gaza Strip, %` = gaza,
+    `Weight change, % of pre-war` = pct_weight_change,
+    `BMI change, kg/m2` = bmi_change,
+    `Underweight at enrolment, %` = pct_underweight_entry
+  ) |>
+  ft()
+```
+
+### Risk factors for weight change since pre-war
+
+Chronic condition was recorded for only 144 participants, almost all enrolling from late October, so we did not include it in the main adjusted model and analysed it separately among the participants asked.
+
+```{r}
+#| label: tbl-chronic
+#| tbl-cap: "Difference in weight change since pre-war for participants reporting a chronic condition, adjusted, among those who were asked."
+
+tbl_chronic |>
+  as_flex_table()
+```
+
+### Weight change during follow-up
+
+```{r}
+#| label: fig-followup-spanning
+#| fig-cap: >-
+#|   Individual trajectories of weight relative to pre-war, with the fitted population-level trajectory (line, 95% confidence band) from a smooth of calendar day.
+#|   Participants measured both before and after the 10 October 2025 ceasefire (dashed line), with the model refitted to this subset.
+#|   Points are filled by BMI category at enrolment (triangles: underweight), as in Figure 2 of the manuscript; larger points are each participant's first measurement.
+#| fig-width: 7
+#| fig-height: 5
+
+followup_spanning <- plot_trajectories(
+  longitudinal_spanning,
+  paste(n_spanning, "participants measured either side of the ceasefire")
+) |>
+  add_gam_fit(gam_fit_spanning)
+
+save_fig(followup_spanning, "figS2-followup-spanning", width = 7, height = 5)
+```
+
+```{r}
+#| label: tbl-paired
+#| tbl-cap: "Change from first to last measurement among participants measured both before and after the 10 October 2025 ceasefire."
+
+tbl_paired |>
+  as_flex_table()
+```
+
+## Pre-war BMI: comparison with independent estimates
+
+### 2020 population survey
+
+We compared the pre-war BMI of participants aged 40-59 (the age bands with 10 or more participants) with an independent 2020 survey of a representative sample of the Gaza Strip population in this age group [@abuhamadHypertensionCascadeCare2022].
+Participants shared a similar weight distribution; however, mean BMI was lower among women in our sample compared to the representative survey (by 2.1-2.5 kg/m^2^), and higher among men (by 1.5-2.1 kg/m^2^; Table S10).
+
+```{r}
+#| label: tbl-external
+#| tbl-cap: >-
+#|   Pre-war BMI in this study compared with a 2020 cross-sectional survey of adults aged 40 and over, by age band and sex.
+#|   Men aged 60-69 (n = 2) are shown but not included in the comparison in the text.
+
+external_comparison |>
+  transmute(
+    `Age band` = recode(
+      age_band,
+      "[40,50)" = "40-49", "[50,60)" = "50-59", "[60,70)" = "60-69", "[70,120]" = "70+"
+    ),
+    Sex = sex,
+    `This study, n` = n_this_study,
+    `This study, mean BMI (SD)` = sprintf(
+      "%.1f (%.1f)", mean_bmi_prewar, sd_bmi_prewar
+    ),
+    `2020 survey, mean BMI` = sprintf("%.1f", bmi_2020)
+  ) |>
+  ft()
+```
+
+### NCD-RisC estimates
+
+We compared the prevalence of underweight and obesity from recalled pre-war weight with modelled prevalence for 2022 [@ncdriscObesityRisePlateaus2026].
+For Palestine we used estimates by sex and 5-year age group, weighted to participants' ages; for the world, age-standardised estimates by sex.
+We used point estimates only.
+Estimates for Palestine include the West Bank.
+
+Among women, we observed similar prevalence of underweight (1.3% in our sample, against 1.4% in the modelled estimate), and lower prevalence of obese BMI (38% and 45% respectively).
+Among men, our sample had lower prevalence of underweight (0%, against 2%), but higher prevalence of obese BMI (37%, against 29%), compared to the modelled estimate.
+
+```{r}
+#| label: tbl-prewar-reference
+#| tbl-cap: >-
+#|   Underweight (BMI < 18.5 kg/m2) and obesity (BMI of 30 kg/m2 or more) from recalled pre-war weight, compared with NCD-RisC modelled prevalence for 2022.
+#|   Palestine: by sex and 5-year age group, weighted to participants' ages; includes the West Bank.
+#|   World: by sex, age-standardised.
+#|   Both sexes are weighted to participants' sex mix.
+
+prewar_reference |>
+  mutate(sex = factor(sex, levels = c(sex_levels, "Both"))) |>
+  arrange(sex) |>
+  transmute(
+    Sex = sex,
+    n,
+    `Underweight, %: recalled` = sprintf("%.1f", underweight_recalled),
+    `Underweight, %: Palestine` = sprintf("%.1f", underweight_palestine),
+    `Underweight, %: world` = sprintf("%.1f", underweight_world),
+    `Obese, %: recalled` = sprintf("%.1f", obese_recalled),
+    `Obese, %: Palestine` = sprintf("%.1f", obese_palestine),
+    `Obese, %: world` = sprintf("%.1f", obese_world)
+  ) |>
+  ft()
+```
+
+## Mean, median and geometric mean of change
+
+```{r}
+#| label: tbl-centre-comparison
+#| tbl-cap: >-
+#|   Sensitivity to the choice of summary: each mean reported in the manuscript, with the median and geometric mean of the same quantity.
+#|   Mean: t-based 95% CI, except standardisation rows.
+#|   Median: exact order-statistic 95% CI.
+#|   Geometric mean: exp(mean log ratio of weight to pre-war weight) - 1, as a percentage, with a t-based 95% CI on the log scale; not applicable to BMI change or to percentage-point differences.
+#|   Standardisation rows: as Table S7, with percentile 95% intervals from 2000 bootstrap resamples and a weighted median.
+#|   Not shown: mean pre-war BMI against the 2020 survey (Table S10), which publishes means only.
+
+bind_rows(
+  centres_prewar, centres_context, centres_followup, centres_participation
+) |>
+  format_centres() |>
+  select(
+    `Manuscript section` = location,
+    Quantity = quantity,
+    Group = group,
+    n,
+    `Mean (95% CI)` = mean,
+    `Median (95% CI)` = median,
+    `Geometric mean (95% CI)` = geometric_mean
+  ) |>
+  ft()
+```
+
+## Published estimates of adult weight change
+
+We compared weight change in this study with other studies of adults in the Gaza Strip since October 2023 that reported weight before and during the war [@alnabihFoodInsecurityWeight2024; @farisCatastrophicFamineGaza2025].
+
+```{r}
+#| label: tbl-literature
+#| tbl-cap: >-
+#|   Studies of weight change among adults in the Gaza Strip since October 2023.
+#|   Weights and BMI are sample means.
+#|   Loss is the difference between mean pre-war and mean current weight, as a percentage of mean pre-war weight, for comparability with the published studies; the mean of individual percentage changes in this study is reported in the manuscript.
+#|   Alnabih et al.: no height recorded, so no BMI.
+
+literature_comparison |>
+  ft()
+```
+
+## Study materials
+
+### Survey questionnaires
+
+[TODO: add enrolment and follow-up survey forms]

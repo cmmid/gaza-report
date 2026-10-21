@@ -14,7 +14,8 @@ pacman::p_load(here)
 # record-level exclusion counts in data/processed/data-quality.csv.
 source(here("R", "clean.R"))
 
-# Tables and figures for the manuscript
-# rendered to report/results.html (for review) and report/results.docx (for draft)
+# Manuscript and supplement, each rendered to html and docx in report/.
+# Each sources R/utils.R, R/data.R and the topic files it uses.
 # Figures are also written to outputs/figures/.
-quarto::quarto_render(here("report", "results.qmd"))
+quarto::quarto_render(here("report", "manuscript.qmd"))
+quarto::quarto_render(here("report", "supplement.qmd"))

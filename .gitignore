@@ -2,8 +2,15 @@
 *.csv
 *.docx
 *.pdf
-# except the aggregate 2020 survey table that report/results.qmd reads
+# except the aggregate 2020 survey table that R/context.R reads
 !data/raw/gaza_survey2020_kcal_bmi_agg.csv
+# and the public NCD-RisC reference BMI extract it reads
+!data/raw/ncdrisc_2026_bmi_age_sex_2022.csv
+# and the public US Census Bureau IDB population extract for the Gaza Strip
+!data/raw/idb2025_gaza_pop_age_sex_2025.csv
+# NCD-RisC, IDB and WPP source files (public, re-downloadable; see R/ncdrisc-extract.R)
+data/context/*.zip
+data/context/*.gz
 # analysis outputs: contain participant-level rows
 data/processed/results/
 
@@ -58,8 +65,12 @@ CLAUDE.md
 *.DS_Store
 .DS_Store
 /report/results_files
+/report/manuscript_files
+/report/supplement_files
 
 # Rendered report and manuscript figures
 /report/results.html
 /report/results.docx
+/report/manuscript.html
+/report/supplement.html
 /outputs/
