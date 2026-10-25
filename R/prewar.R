@@ -104,16 +104,34 @@ underweight_rr <- table(
   unclass() |>
   Wald_CI_ratio_paired_2x2()
 
-## Risk factors for weight loss since pre-war (tbl-characteristics) ----
-tbl_characteristics <- model_data |>
-  select(all_of(characteristic_order)) |>
+## Characteristics of weight loss since pre-war (tbl-characteristics) ----
+# A constant `overall` variable gives the table a top row for all participants
+table1_data <- model_data |>
+  mutate(overall = "Overall", pct_lost = -pct_weight_change) |>
+  select(overall, pct_lost, all_of(characteristic_order))
+table1_labels <- c(list(overall = "Overall"), labels_for(characteristic_order))
+
+tbl_characteristics <- table1_data |>
+  select(-pct_lost) |>
   tbl_summary(
-    label = labels_for(characteristic_order),
+    label = table1_labels,
+    type = overall ~ "dichotomous",
+    value = overall ~ "Overall",
     statistic = all_categorical() ~ "{n} ({p}%)",
     digits = all_categorical() ~ c(0, 1),
     missing_text = "(Missing)"
   ) |>
   modify_header(stat_0 = "**N (%)**")
+
+tbl_mean_loss <- table1_data |>
+  tbl_continuous(
+    variable = pct_lost,
+    label = table1_labels,
+    value = overall ~ "Overall",
+    statistic = everything() ~ "{mean}",
+    digits = everything() ~ 1
+  ) |>
+  modify_header(stat_0 = "**Mean % weight loss**")
 
 tbl_crude <- model_data |>
   select(log_weight_ratio, all_of(characteristic_order)) |>
@@ -134,15 +152,15 @@ fit_adjusted <- lm(
 )
 tbl_adjusted <- tbl_assoc(fit_adjusted)
 
-# Table 1: characteristics with crude and adjusted associations.
+# Table 1: characteristics and mean loss, with crude and adjusted associations.
 # Chronic condition is in the crude model only
 tbl_table1 <- tbl_merge(
-  list(tbl_characteristics, tbl_crude, tbl_adjusted),
+  list(tbl_characteristics, tbl_mean_loss, tbl_crude, tbl_adjusted),
   tab_spanner = FALSE
 ) |>
   modify_header(
-    estimate_2 = "**Crude % difference (95% CI)**",
-    estimate_3 = "**Adjusted % difference (95% CI)**"
+    estimate_3 = "**Crude % difference (95% CI)**",
+    estimate_4 = "**Adjusted % difference (95% CI)**"
   )
 
 ## Chronic condition (tbl-chronic) ----

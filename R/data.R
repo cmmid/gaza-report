@@ -125,9 +125,7 @@ baseline <- included |>
 
 # Longitudinal set ------------------------------------------------------------
 # Participants with 2+ records, less those with an implausible rate of BMI
-# change (> 1 kg/m2 per day). Entry day in months for the follow-up model.
-days_per_month <- 30
-
+# change (> 1 kg/m2 per day).
 longitudinal_all <- included |>
   filter(n_obs >= 2) |>
   arrange(id, record_date) |>
@@ -149,7 +147,7 @@ longitudinal <- longitudinal_all |>
     log_weight_ratio = log(weight / weight_prewar),
     pct_weight_change = 100 * (exp(log_weight_ratio) - 1),
     calendar_day = as.numeric(record_date - study_start),
-    entry_day = as.numeric(date_entry - study_start) / days_per_month
+    entry_day = as.numeric(date_entry - study_start)
   ) |>
   group_by(id) |>
   mutate(

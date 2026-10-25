@@ -1,22 +1,21 @@
-# Open, 2026-10-19
+# Open, 2026-10-25
 
 Everything below "Archive" is the earlier log, kept unchanged; S-numbers there predate the current supplement.
 
 ## Facts to confirm
 
-- Chronic-condition question: Methods say "from August". Data: 4 answers in mid-August, then none until the week of 19 October (144 asked). Check the ODK form history.
 - Devices: Abstract says "personal devices"; Methods say "weight scales and mobile phones" and "mobile phones or computers".
-- Advertisement dates: Figure S1 marks 25 July and 19 October (`advert_dates` in `R/participation.R`). Source for 25 July?
+- Advertisement dates: Figure 1B marks 25 July and 19 October (`advert_dates` in `R/participation.R`). Source for 25 July?
 - ID options: Methods give two (national ID, or composite sequence). Confirm.
 - Sex vs gender: form wording.
-- PCBS figures in the Discussion (8% of people over 15 employed in 2025; women 12% of the employed in 2023), entered by hand.
+- PCBS figure in the Discussion (8% of people over 15 employed in 2025), entered by hand.
 
 ## Text
 
 - Return for follow-up: "in all other respects ... similar" leaves out enrolment cohort (Oct-Nov cohort much less likely to return; Table S3).
-- Abstract says older participants and men lost the most weight; the Discussion does not mention sex.
-- Methods: the log ratio "treats weight change as proportional". Table S6 shows larger % loss at higher pre-war BMI (normal 11.0%, overweight or obese 17.4%), so proportionality holds only partly. Qualify?
-- S-numbers in both qmds are typed by hand; recheck if anything in the supplement moves.
+- Abstract revised 2026-10-22 and 2026-10-25 (adds retention). Now 350 words against the 300 limit: cut.
+- S-numbers in both qmds are typed by hand; recheck if anything in the supplement moves (all checked 2026-10-25).
+- `[citation needed]{.mark}` placeholders in the Introduction: January-March 2025 ceasefire; universal literacy and connectivity.
 
 ## Statements and files
 
@@ -31,6 +30,15 @@ Everything below "Archive" is the earlier log, kept unchanged; S-numbers there p
 - Figure 2: viridis by BMI category at enrolment, triangles for underweight, threshold lines on both axes; inset cross-tabulates category pre-war by enrolment.
 - Figure 3 (moved from the supplement): forest plot of the adjusted estimates in Table 1.
 - Supplement figures: S1 BMI pyramid, S2 ceasefire-spanning trajectories. Former participation and unlinked figures dropped (shown in Figure 1B).
+
+## Done 2026-10-25
+
+- Review of `manuscript.qmd` for accuracy, consistency, flow; every number checked against the topic scripts.
+- Cross-references: Table S12 to S7 (geometric means), S4 to S1 (cohorts); supplement "as Table S7" to S12; dropped Figure 1B citation for the dashboard.
+- Corrected: cohort names (August-September, October-November); cohort difference as adjusted 4.3 points; 345 measurements include enrolment; timeliness over forms; adjusted chronic n = 139; sensitivity range 3.5 to 3.8; chronic question from 10 August (earliest answer in data); Alnabih a convenience survey; recovery between August and December, not after the ceasefire; IDs hashed; women 12% of employed adults.
+- Methods: pre-war defined once; secondary outcomes; missing weight in exclusions; new "System performance and participation" paragraph (timeliness, linkage, balance, return model); log-ratio justification merged and softened. Dashboard update frequency no longer promised.
+- Terms: residence, participant ID, self-measured, partial recovery (Abstract). Discussion repeats removed (double burden; "cannot generalise"). Tables S10-S11 cited for recall by sex.
+- Results and Discussion flow left as is (Kath's decision): cohort comparison stays in the follow-up section; return analysis stays after it.
 
 ## Done 2026-10-19
 

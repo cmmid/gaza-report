@@ -61,12 +61,10 @@ add_gam_fit <- function(plot, fit) {
 ## Follow-up trajectory (fig-outcomes B) ----
 # Smooth of calendar day, participant random intercept, entry day as a
 # person-level term. Outcome on the log scale, back-transformed for display.
-fit_followup_gam <- function(data) {
-  gam(
-    log_weight_ratio ~ s(calendar_day, k = 10) + entry_day + s(id, bs = "re"),
-    data = droplevels(data),
-    method = "REML"
-  )
+fit_followup_gam <- function(
+    data,
+    formula = log_weight_ratio ~ s(calendar_day, k = 4) + entry_day + s(id, bs = "re")) {
+  gam(formula, data = droplevels(data), method = "REML")
 }
 
 # Population-level fitted trajectory, random effect held out. datagrid() holds
@@ -92,20 +90,29 @@ fit_gam <- fit_followup_gam(longitudinal)
 gam_fit_all <- predict_gam(fit_gam)
 
 # Change in fitted weight from the first to the last day of follow-up, in
-# percentage points of pre-war weight, with a delta-method 95% CI
-first_last_grid <- datagrid(
-  model = fit_gam,
-  calendar_day = range(fit_gam$model$calendar_day)
-)
-gam_change <- hypotheses(
-  fit_gam,
-  hypothesis = \(x) {
-    fitted <- as_pct_difference(
-      predict(x, newdata = first_last_grid, exclude = "s(id)")
+# percentage points of pre-war weight, with a delta-method 95% CI. Averaged
+# over participants: identical for each when the random intercept is held out,
+# but needed when participant enters as a fixed effect.
+fitted_change <- function(fit) {
+  days <- range(fit$model$calendar_day)
+  grid <- datagrid(model = fit, calendar_day = days, id = unique(fit$model$id))
+  hypotheses(fit, hypothesis = \(x) {
+    fitted <- as_pct_difference(predict(x, newdata = grid, exclude = "s(id)"))
+    data.frame(
+      term = "last - first",
+      estimate = mean(fitted[grid$calendar_day == days[2]]) -
+        mean(fitted[grid$calendar_day == days[1]])
     )
-    data.frame(term = "last - first", estimate = fitted[2] - fitted[1])
-  }
-)
+  })
+}
+
+gam_change <- fitted_change(fit_gam)
+
+# Spread of participants around the population trajectory: SD of the random
+# intercept (variance = scale / smoothing parameter) and of the residual, on
+# the log scale
+sd_participant <- sqrt(fit_gam$sig2 / fit_gam$sp[["s(id)"]])
+sd_residual <- sqrt(fit_gam$sig2)
 
 ## Participants measured either side of the ceasefire (fig-followup-spanning) ----
 longitudinal_spanning <- filter(longitudinal, spans_ceasefire)
@@ -113,55 +120,32 @@ n_spanning <- n_distinct(longitudinal_spanning$id)
 fit_gam_spanning <- fit_followup_gam(longitudinal_spanning)
 gam_fit_spanning <- predict_gam(fit_gam_spanning)
 
-## Change from first to last measurement (tbl-paired) ----
-# Participants measured before and after the ceasefire
-paired <- longitudinal_spanning |>
-  group_by(id) |>
-  arrange(record_date, .by_group = TRUE) |>
-  summarise(
-    bmi_diff = last(bmi) - first(bmi),
-    pct_diff = last(pct_weight_change) - first(pct_weight_change),
-    days_between = as.numeric(last(record_date) - first(record_date)),
-    .groups = "drop"
-  )
-
-# Mean change with t-based 95% CI, i.e. a paired t-test of last vs first
-tbl_paired <- paired |>
-  select(pct_diff, bmi_diff, days_between) |>
-  tbl_summary(
-    label = list(
-      pct_diff ~ "Weight, % of pre-war",
-      bmi_diff ~ "BMI (kg/m2)",
-      days_between ~ "Days between first and last measurement"
-    ),
-    type = everything() ~ "continuous",
-    statistic = list(
-      c(pct_diff, bmi_diff) ~ "{mean}",
-      days_between ~ "{median}"
-    ),
-    digits = list(pct_diff ~ 1, bmi_diff ~ 2, days_between ~ 0)
-  ) |>
-  add_ci(
-    include = c(pct_diff, bmi_diff),
-    method = everything() ~ "t.test",
-    statistic = ci_statistic,
-    style_fun = list(
-      pct_diff ~ label_style_number(digits = 1),
-      bmi_diff ~ label_style_number(digits = 2)
-    ),
-    pattern = "{stat} ({ci})"
-  )
-
 # Supplementary analysis ------------------------------------------------------
 
-## Mean, median and geometric mean (tbl-centre-comparison) ----
-centres_followup <- tibble(
-  location = "Results, follow-up",
-  quantity = "Change from first to last measurement, percentage points of pre-war weight",
-  group = "Measured before and after the ceasefire",
-  n = nrow(paired),
-  centres = list(centre_summary(paired$pct_diff))
-)
+## Sensitivity of the fitted change (tbl-followup-sensitivity) ----
+# The later cohort contributes few, short follow-ups: check the change does not
+# rest on the enrolment-day term or on comparisons between participants
+longitudinal_30d <- longitudinal |>
+  filter(max(record_date) - min(record_date) >= 30, .by = id)
+
+followup_sensitivity <- tribble(
+  ~model, ~fit,
+  "Main model", fit_gam,
+  "No term for day of enrolment",
+  fit_followup_gam(longitudinal, log_weight_ratio ~ s(calendar_day, k = 4) + s(id, bs = "re")),
+  "Participant as a fixed effect (change within participants only)",
+  fit_followup_gam(longitudinal, log_weight_ratio ~ s(calendar_day, k = 4) + id),
+  "Participants measured before and after the ceasefire", fit_gam_spanning,
+  "Participants measured over 30 days or more", fit_followup_gam(longitudinal_30d)
+) |>
+  mutate(
+    participants = map_int(fit, \(f) n_distinct(f$model$id)),
+    measurements = map_int(fit, \(f) nrow(f$model)),
+    days = map_dbl(fit, \(f) diff(range(f$model$calendar_day))),
+    change = map_chr(fit, \(f) with(fitted_change(f), fmt_ci(estimate, conf.low, conf.high))),
+    edf = map_dbl(fit, \(f) summary(f)$edf[1])
+  ) |>
+  select(-fit)
 
 # Numbers in the text ---------------------------------------------------------
 # "estimate% (low to high)" for one row of a fitted follow-up trajectory
@@ -183,12 +167,19 @@ numbers_followup <- tribble(
   "Results, follow-up", "Fitted weight, last day of follow-up",
   paste(format(last(gam_fit_all$record_date), "%e %B"),
         fit_ci(gam_fit_all, nrow(gam_fit_all))),
+  "Results, follow-up", "SD of participant levels; residual SD (log ratio x 100)",
+  sprintf("%.1f; %.1f", 100 * sd_participant, 100 * sd_residual),
+  "Results, follow-up", "Share of variance between participants",
+  fmt_pct(100 * sd_participant^2 / (sd_participant^2 + sd_residual^2), 0),
+  "Results, follow-up", "95% of participants' fitted weight, first day of follow-up",
+  with(gam_fit_all, paste(
+    fmt_pct(as_pct_difference(log1p(estimate[1] / 100) - 1.96 * sd_participant)), "to",
+    fmt_pct(as_pct_difference(log1p(estimate[1] / 100) + 1.96 * sd_participant))
+  )),
   "Results, follow-up", "Measurements; participants in the follow-up model",
   paste(nrow(longitudinal), n_distinct(longitudinal$id), sep = "; "),
   "Results, follow-up", "Participants measured before and after the ceasefire",
   as.character(n_spanning),
-  "Results, follow-up", "Participants in the paired first-to-last change",
-  as.character(nrow(paired)),
   "Results, follow-up", "Participants dropped for implausible BMI change; their measurements",
   paste(length(implausible_ids), sum(longitudinal_all$id %in% implausible_ids),
         sep = "; ")
