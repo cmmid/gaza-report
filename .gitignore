@@ -1,7 +1,11 @@
-# Data and documents: no csv, docx or pdf anywhere
+# Data and documents: no csv, docx, pdf or html anywhere
 *.csv
 *.docx
 *.pdf
+*.html
+# except the rendered manuscript and supplement (aggregate results only)
+!report/manuscript.docx
+!report/supplement.docx
 # except the aggregate 2020 survey table that R/context.R reads
 !data/raw/gaza_survey2020_kcal_bmi_agg.csv
 # and the public NCD-RisC reference BMI extract it reads
@@ -68,10 +72,5 @@ CLAUDE.md
 /report/manuscript_files
 /report/supplement_files
 
-# Rendered report and manuscript figures
-/report/results.html
-/report/results.docx
-/report/manuscript.html
-/report/supplement.html
-/report/report.html
+# Rendered figures and logs
 /outputs/

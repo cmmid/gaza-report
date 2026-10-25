@@ -17,6 +17,7 @@ Repo structure:
   - [ncdrisc-extract.R](R/ncdrisc-extract.R): builds the NCD-RisC and IDB extracts in `data/raw/` from `data/context/`; run by hand
   - [participation.R](R/participation.R), [prewar.R](R/prewar.R), [followup.R](R/followup.R), [context.R](R/context.R): one file per topic, each ending with the numbers quoted in the text
 - [report/](report/)
+  - Rendered drafts: [manuscript.docx](report/manuscript.docx), [supplement.docx](report/supplement.docx)
   - [manuscript.qmd](report/manuscript.qmd): manuscript text, main tables and figures
   - [supplement.qmd](report/supplement.qmd): supplementary tables and figures
   - [TODO-report.md](report/TODO-report.md): outstanding edits and review notes
