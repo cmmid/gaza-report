@@ -1,6 +1,7 @@
 ---
-title: "Participatory surveillance of adult weight among humanitarian staff in the Gaza Strip, 2025"
+title: "Real-time signals of food insecurity: a co-designed cohort with humanitarian staff in the Gaza Strip, 2025"
 bibliography: gaza.bib
+csl: bmj.csl
 format:
   html:
     toc: true
@@ -8,6 +9,9 @@ format:
     embed-resources: true
   docx:
     toc: false
+    filters:
+      - path: docx-cell-paragraph.lua
+        at: post-render
 execute:
   echo: false
   warning: false
@@ -43,180 +47,156 @@ Katharine Sherratt^1,2^, Kevin van Zandvoort^1,2,3^, Zeina Jamaluddine^1,3^, Cla
 
 ## Abstract
 
-*Introduction.* The Gaza Strip experiences long term food insecurity, with severe famine conditions over periods of 2024 and 2025.
-Impacts on nutritional health were partially documented among children, but evidence among adults was very limited, with no continuous measure as conditions changed.
-In July 2025, we aimed to generate such evidence to inform real-time public action, building on the participation of humanitarian staff working in the Gaza Strip.
+*Introduction.* The Gaza Strip experiences a long-term crisis of food insecurity, with fluctuating access to food supply and repeated risk of famine.
+This materialised in an acute emergency over 2025, but there was little contemporary evidence of the scale and severity of impact on adult nutrition.
+In July 2025, humanitarian agencies asked our team to measure the effect of food insecurity among aid workers in Gaza.
 
-*Methods.* We co-designed a low-cost study with Save the Children International and the United Nations Relief and Works Agency for Palestine Refugees in the Near East.
-This needed only calibrated weight scales and data entered by staff on personal devices.
-Staff recorded their weight as recalled for October 2023 together with their measured weight at enrolment, and could then contribute repeat measurements.
-We created an automated pipeline to clean, aggregate, and visualise these anonymised data in real-time on a public dashboard.
-We evaluated weight change from 2023 to 2025, adjusted for participant characteristics, and change over a four-month study period, which included the ceasefire of October 2025.
+*Methods.* We co-designed a low-cost cohort study among humanitarian staff in the Gaza Strip, working with Save the Children International (SCI) and the United Nations Relief and Works Agency for Palestine Refugees in the Near East (UNRWA).
+We recruited participants by advertisement in July and October 2025.
+Participants anonymously recorded their recalled 2023 pre-war weight, measured their weight at enrolment, and at any subsequent time in 2025.
+Aggregated data were analysed in real-time on an automated public dashboard.
+We characterised weight change from pre-war to enrolment, estimated adjusted associations with participant characteristics, and fitted a hierarchical model to estimate change over four months of follow-up.
 
-*Results.* Between 30 July and 1 December 2025, 434 humanitarian staff recorded 678 valid measurements.
-Of these, 106 (24%) returned for at least one repeat measurement.
-Nearly all (94%) participants had lost weight since October 2023.
-Participants had lost on average about one-sixth of their pre-war weight (mean 15.6%, 95% CI 14.8 to 16.5).
-Prevalence of underweight BMI rose twelve-fold (0.7% to 8.1%; relative risk 11.7 (4.0 to 34.4)).
-After adjustment, we observed greater weight loss with increasing age, among men, and by governorate of residence.
-We saw partial recovery, with fitted weight rising by an estimated 3.9 (2.6 to 5.1) percentage points of pre-war weight over the study period.
+*Results.* Between 30 July and 1 December 2025, 434 staff recorded 678 valid weight measurements.
+Nearly all (94%) had lost weight since before the war, individually losing an average of one-sixth of their pre-war weight (15.6%, 95% CI 14.8-16.5%).
+Prevalence of underweight BMI rose twelve-fold among the cohort, from 0.7% pre-war to 8.1% at enrolment (relative risk 11.7, 95% CI 4.0-34.4).
+After adjustment, we observed greater weight loss with increasing age, among men, and in northern Gaza.
+We noted partial recovery over time among 104 participants with follow-up, with an estimated increase of 3.9 (2.6-5.1) percentage points of pre-war weight over the four months.
 
-*Conclusion.* This study adds to a timeline of evidence on the reach and depth of food insecurity in Gaza, and the systematic degradation of population-level food security.
-Our findings represent a salaried occupational sample of the affected population and were limited by recall and selection biases.
-We suggest that self-measured adult weight is a low-cost complement to child anthropometry to identify real-time signals of famine.
-
-## Plain summary
-
-Famine monitoring draws on a range of metrics focused on children and households, with relatively less close monitoring of the nutritional status of individual adults.
-
-Among humanitarian staff in the Gaza Strip, participants had lost a mean 15.6% of their pre-war weight.
-Our study used low-cost, anonymised, self-measured weight, and provided a public platform for real-time evidence of an unfolding crisis.
-However, this design struggled to support repeated measurements among participants over time.
-
-Self-measured adult weight can support famine monitoring with simple requirements, but needs a clear population denominator, a linkable ID, and a target use for the data from the outset.
-Under specific, extreme conditions, workforce self-measurement among humanitarian agencies may provide some insight into local conditions that are otherwise challenging to understand.
+*Conclusion.* This work adds to a convergence of evidence demonstrating indiscriminate destruction of food security across the Gazan population.
+Our estimates likely understate the breadth and depth of adult undernutrition in Gaza.
+Despite anticipating a protective effect from employment, our participants were not clearly better protected from weight loss compared to other evidence among the general adult population.
+Fluctuations in food security are difficult to capture, and we suggest longitudinal adult weight studies offer an important longer-term indicator for monitoring population nutritional health.
 
 ## Introduction
 
-The Gaza Strip has experienced a long-term crisis of food insecurity, with severe impacts on individual nutritional health.
-Restricted food availability has followed the systematic destruction of local food-producing sectors, combined with limited access to food imports.
-This crisis substantially worsened following the re-escalation of war in October 2023 [@checchiWartimeFoodAvailability2025].
-A ceasefire from 19 January to 18 March 2025 allowed a temporary increase in food imports [citation needed]{.mark}.
-In March 2025, Israel fully closed Gaza's borders, with imports of necessities including food falling below the level of population sustenance [@davisAvailabilityConsumptionInequality2026].
-On 22 August 2025, an Integrated Food Security Phase Classification (IPC) analysis confirmed famine in Gaza Governorate [@famineReviewCommitteeGazaStrip2025].
-The situation eased after the ceasefire of 10 October 2025 [@ipcGazaStripAcute2025].
-The acute period of this crisis came with very limited capacity for traditional measures of public health and welfare.
+The Gaza Strip experiences a long-term crisis of food insecurity.
+This rose to critical levels following the re-escalation of war in October 2023, with food supplies intermittently and increasingly restricted by Israeli border policy [@checchiWartimeFoodAvailability2025].
+By mid-2025, the entire population of 2.1 million was in acute crisis [@ipcGazaStripSpecialBrief2026], and famine was formally confirmed in Gaza Governorate in August [@famineReviewCommitteeGazaStrip2025].
+Conditions partially eased from October 2025, as food assistance expanded following a ceasefire [@ipcGazaStripSpecialBrief2026].
+However, there is very limited empirical evidence to show the impact of these intense fluctuations in food insecurity on the health of the Gazan population.
 
-It was difficult to identify the scale and speed of the impact of the famine on nutritional health as it happened.
-Several established data streams were repurposed to assess acute malnutrition at sentinel locations or in sentinel populations.
-Household food security was indicated by surveyed food consumption scores, while individual-level data typically came from surveys of mid-upper arm circumference (MUAC) among children [@horinoAssessmentMalnutritionPreschoolaged2025; @hassneiahAcuteMalnutritionChildren2025].
-However, the Gazan population experiences a double burden of malnutrition: most adults aged 40 and over were overweight in data from 2020 [@abuhamadHypertensionCascadeCare2022].
-Population-representative data are very limited, with few consistent measures of working-age or elderly adults, and we are not aware of continuous, real-time indicators of individual nutritional health.
-As food security worsened over 2025, only anecdotal evidence suggested that adults were rapidly losing body weight, including reports of hunger and wasting among humanitarian staff in Gaza [@ngoJointStatementMassStarvation2025].
+Evidence of food insecurity in Gaza is monitored by the Integrated Food Security Phase Classification (IPC).
+This is assessed as a combination of household consumption and coping indicators, and anthropometric data, typically from surveys of mid-upper arm circumference (MUAC) in sentinel populations of children [@ipcGazaStripSpecialBrief2026].
+As crisis unfolded in 2025, these data streams were repurposed to monitor acute malnutrition [@horinoAssessmentMalnutritionPreschoolaged2025; @hassneiahAcuteMalnutritionChildren2025].
+At the same time, these signals only offered partial, infrequent indicators of population-wide health.
+
+The scale and severity of changes in nutritional health were challenging to describe in real-time.
+Among adults, data on weight and nutrition has been limited to ad hoc convenience surveys, which were not repeated during the acute crisis period.
+The severity of adult weight change is also less visible due to the "double burden" of malnutrition in the Gazan population.
+In 2020, most adults aged over 40 were overweight [@abuhamadHypertensionCascadeCare2022], making traditional threshold-based prevalence of underweight less informative for monitoring change.
+As a result, only anecdotal evidence suggested that adults were rapidly losing body weight as food insecurity worsened over 2025, including reports of hunger and wasting among humanitarian staff [@ngoJointStatementMassStarvation2025].
 
 In July 2025, Save the Children International (SCI) asked our team to help quantify the effect of food insecurity among humanitarian aid workers.
-With SCI and the United Nations Relief and Works Agency for Palestine Refugees in the Near East (UNRWA), we set up participatory surveillance of adult weight among their staff in the Gaza Strip, to inform humanitarian decision-making, advocacy and diplomatic action.
-Participatory surveillance collects data directly from the people it concerns and returns the findings to them [@mcneilLandscapeParticipatorySurveillance2022].
-In crises, community-based surveillance by trained volunteers has given timely detection of outbreaks and deaths where routine systems are weak [@ratnayakePeoplecentredSurveillanceNarrative2020a].
-Here, we:
+With SCI and the United Nations Relief and Works Agency for Palestine Refugees in the Near East (UNRWA), we co-designed an open cohort study to measure adult weight among staff in the Gaza Strip.
+We aimed to inform humanitarian decision-making, advocacy and diplomatic action.
 
-1. describe the system;
-2. assess participation, retention, data quality and timeliness;
-3. estimate change in weight and body mass index (BMI) since before the war (pre-war), its association with participant characteristics, and its course over four months.
-
-We interpret findings in the context of famine in a setting with universal literacy and high connectivity [citation needed]{.mark}.
-Humanitarian staff are not representative of the population, but are affected by the same food environment.
-They are also a defined and accessible group who can measure themselves with little additional resource.
+Here, we interpret results from this cohort by estimating change in weight and body mass index (BMI) from October 2023 to 2025, and its course over a four-month follow-up period.
+We consider findings in the context of identifying signals of food insecurity in a population with both a double burden of malnutrition and systematically degraded coping mechanisms for food security.
 
 ## Methods
 
 ### Study design
 
-*Design.* We ran a panel study among staff and contractors of SCI and of UNRWA's Health Section in the Gaza Strip.
-We initially co-designed the study protocol with SCI based on a low resource burden, using only weight scales and mobile phones.
-We pre-specified a study protocol (see Supplement; [protocol to be added]{.mark}).
-
-Both agencies advertised the study to staff in July 2025 and again in October 2025, with an information sheet in English and Arabic and a QR code linking to a non-technical description of the project (<https://cmmid.github.io/gaza-response/about.html>).
+Over July 2025 we co-designed a cohort study protocol with word-of-mouth contacts at SCI in the Gaza Strip, with UNRWA joining during development.
+Staff and contractors of SCI and of UNRWA's Health Section in the Gaza Strip were eligible to participate.
+We prioritised a low resource use, using only weight scales and staff personal devices.
+Both SCI and UNRWA advertised the study to staff in July 2025 and again in October 2025, with an information sheet in English and Arabic and a QR code linking to a non-technical description of the project.
 Each agency placed calibrated electronic scales in its female and male changing rooms.
 Participants used mobile phones or computers to read the study information, give consent, create their ID and enter data.
 
 Participation was voluntary and anonymous.
+Participants gave consent on the enrolment form before entering any data, and where consent was refused this nullified all fields of participant data automatically.
 We collected no names or contact details, and each participant created their own participant ID to link repeat measurements.
 This was either their nine-digit Palestinian national ID, or a composite ID (initials of: first name, family name, father's name and mother's name; their date of birth; and the initial of a favourite artist).
-IDs were hashed (one-way) at source, and staff were aware that researchers could not identify them.
+Participant IDs were hashed (one-way) at source, and participants were aware that researchers could not identify them.
+We provided contact details for participants to request more information or withdraw data.
 
-*Data collection.* At enrolment participants reported baseline characteristics of: sex, age, governorate of residence, professional role, number of dependent children under 10 years, height (nearest cm), and weight before 7 October 2023 as they recalled it ("pre-war"; nearest 0.1 kg).
+At enrolment, participants reported baseline characteristics of: sex, age, governorate of residence, professional role, number of dependent children under 10 years, height (nearest cm), and weight before 7 October 2023 as they recalled it ("pre-war"; nearest 0.1 kg).
 An additional question on chronic health conditions was added on 10 August.
 Participants then measured their own weight using provided scales, measured without shoes, heavy clothing or bags.
+Participants could then choose to provide follow-up measurements at any time.
 At each return measurement, participants entered only their participant ID, the date, and their measured weight.
-We include all data collection forms in the Supplement ([S?: forms to be added]{.mark}).
-
+We include data collection forms in the Supplement.
 We collected data with Open Data Kit, which allowed offline entry, and stored individual records encrypted on a restricted server.
-An automated pipeline pulled new submissions, applied data validation and aggregation, and pushed only the aggregates to a public repository.
-We automated a public dashboard that rebuilt from that repository at each update (<https://cmmid.github.io/gaza-response/>) [@vanzandvoortGazaResponse2026].
-This visualised the number of participants and measurements over time, and weight and BMI change overall and by sex, age, residence and number of dependent children.
 
-*Outcomes.* We defined primary outcomes as: percentage change in weight, and absolute change in BMI, from recalled pre-war weight to measured weight at enrolment.
-Secondary outcomes were underweight BMI at enrolment compared with pre-war, and change in weight relative to pre-war over follow-up.
-
-*Ethics and participant involvement.* The study was developed at the request of SCI, whose staff were among those affected, and the protocol was co-designed with SCI and UNRWA, including identifying relevant baseline characteristics.
-We received ethics approval from the London School of Hygiene and Tropical Medicine (ID 32766).
-Participants gave consent on the enrolment form before entering any data, and where consent was refused this nullified all fields of participant data automatically.
+We built an automated public dashboard to provide real-time information.
+Our pipeline pulled new submissions hourly, applied data validation and aggregation, and published aggregated data visualisations on a public repository and website (<https://cmmid.github.io/gaza-response/>) [@vanzandvoortGazaResponse2026].
 
 ### Analysis
 
-*Exclusion criteria.* We excluded records without consent, duplicate records for the same participant and day, follow-up records that matched no enrolment record, records with missing weight, participants with no recalled pre-war weight, and values outside plausible ranges (weight 30-180 kg; height 140-210 cm; BMI 10-60 kg/m^2^; weight change since enrolment greater than 10% per day).
+We defined primary outcomes as: percentage change in weight, and absolute change in BMI, from recalled pre-war weight to measured weight at enrolment.
+Secondary outcomes were underweight BMI at enrolment compared with pre-war, and change in weight relative to pre-war over follow-up.
+
+We excluded records that were null, duplicated or unlinked to enrolment; records with missing weight; and values outside plausible ranges (weight 30-180 kg; height 140-210 cm; BMI 10-60 kg/m^2^; weight change since enrolment greater than 10% per day).
 We classified BMI as underweight (\<18.5 kg/m^2^), normal (18.5 to \<25), overweight (25 to \<30) or obese (≥30) [@whoPhysicalStatusUse1995].
-We also grouped participants into two enrolment cohorts, August-September and October-November 2025, corresponding to the initial advertisement and re-advertisement.
-We then defined two datasets for analysis.
-A cross-sectional set included each participant's recalled pre-war and measured enrolment weight.
-The longitudinal set included participants with two or more measurements (enrolment and at least one follow-up), excluding participants whose BMI changed by more than 1 kg/m^2^ per day between successive measurements.
 
-*System performance and participation.* We measured timeliness as the days from the date recorded on each form to its arrival on the server, over all forms received.
-We counted follow-up records whose participant ID matched no enrolment record.
-We compared enrolment characteristics between cohorts, and between participants with and without follow-up (Tables S1-S2).
-We estimated the odds of returning for at least one follow-up measurement with logistic regression on age group, sex, residence, dependent children, professional role, BMI at enrolment and enrolment cohort (Table S3).
+We defined a cross-sectional analysis comparing each participant's weight as recalled pre-war and measured at enrolment.
+We estimated mean percentage weight change, and mean absolute BMI change, from 2023 to 2025, with standard 95% confidence intervals (CI).
+Using WHO classification of BMI, we estimated the relative risk of underweight BMI at enrolment in 2025, compared with pre-war 2023, with a Wald 95% CI for paired proportions.
 
-*Change from pre-war to enrolment.* We estimated mean percentage weight change, and mean absolute BMI change, from 2023 to 2025, with 95% confidence intervals (CI).
-Among our participant sample, we estimated the relative risk of underweight BMI at enrolment in 2025, compared with pre-war 2023, with a Wald 95% CI for paired proportions.
+We estimated associations between weight change since pre-war, and participant characteristics, including age group, sex, residence, dependent children, professional role, organisation and enrolment cohort.
+Our outcome was the log ratio of weight at enrolment to pre-war weight.
+We used the log ratio to treat weight change as symmetric and proportional to starting weight [@coleSympercentsSymmetricPercentage2000; @coleStatisticsNotesPercentage2017].
+We estimated crude associations for each characteristic and used linear regression for adjusted associations.
+To handle sparse data, we combined North Gaza with Gaza City, and Rafah with Khan Yunis; and we analysed chronic conditions separately (Supplement).
+We back-transformed coefficients to percentage differences in weight relative to pre-war, and report estimated mean percentage changes.
 
-*Risk factors for weight loss since pre-war.*
-We used linear regression to estimate associations between participant characteristics and weight change since pre-war.
-The outcome was the log ratio of weight at enrolment to pre-war weight, which treats weight change as proportional to starting weight and symmetric [@coleSympercentsSymmetricPercentage2000; @coleStatisticsNotesPercentage2017].
-We back-transformed coefficients to percentage differences in weight relative to pre-war.
-For interpretability we report mean percentage changes, with geometric means in the Supplement (Table S7).
-We estimated crude associations for each characteristic, and adjusted associations including age group, sex, residence, dependent children, professional role, organisation and enrolment cohort.
-We observed sparse data in some categories.
-To handle this, we combined North Gaza (n = 20) with Gaza City; and Rafah (n = 8) with Khan Yunis; and we analysed chronic conditions separately (Supplement).
-
-*Change over follow-up.* We assessed the change in participants' successive weight measurements during follow-up, again using the log ratio to their pre-war weight.
-We estimated this using a generalised additive model with a smooth of calendar day, a linear term for day of enrolment, and a participant random intercept, estimated with restricted maximum likelihood.
+We also analysed a longitudinal set of participants with at least one follow-up measurement.
+We assessed the change in participants' successive weight measurements, again using the log ratio to their pre-war weight.
+We estimated this using a generalised additive model with a smooth of calendar day, a linear term for day of enrolment, and a participant random intercept, as:
 
 $$
   \log\left( \frac{w_{ij}}{w_{i0}} \right) = \beta_0 + f(t_{ij}) + \beta_1 e_i
                                              + u_i + \varepsilon_{ij}
 $$
 
-where $w_{ij}$ is participant $i$'s weight at measurement $j$, $w_{i0}$ their recalled pre-war weight, $t_{ij}$ the day of measurement and $e_i$ the day of the participant's enrolment (both counted from study start), $f$ a thin plate regression spline with basis dimension 4 (about one per month of follow-up), $u_i$ a normally distributed participant random intercept, and $\varepsilon_{ij}$ residual error.
+where $w_{ij}$ is participant $i$'s weight at measurement $j$, $w_{i0}$ their recalled pre-war weight, $f$ a thin plate regression spline with basis dimension 4 (one per month of follow-up), $t_{ij}$ the day of measurement and $e_i$ the day of the participant's enrolment (both counted from study start), $u_i$ a normally distributed participant random intercept, and $\varepsilon_{ij}$ residual error.
+We estimated with restricted maximum likelihood, and checked residuals and the adequacy of the smooth's basis dimension with visual diagnostics (Figure S2).
 We report the population-level trajectory of change over the study period, back-transformed to percentage of pre-war weight (with $u_i = 0$ and $e_i$ at its mean).
 We assessed whether the rate of change differed after the 10 October 2025 ceasefire from the shape of the fitted smooth.
-As sensitivity analysis, we checked whether the fitted change depended on the model specification or participant selection.
-We refitted the model without a term for enrolment time; with participant as a fixed effect; among only participants who measured both before and after the ceasefire; and among participants measured over 30 days or more.
+
+As sensitivity analysis, we assessed risk of bias from differential participation.
+We also grouped participants into two enrolment cohorts, August-September and October-November 2025, corresponding to the initial advertisement and re-advertisement.
+We compared participant characteristics between cohorts, and between participants with and without follow-up (Tables S1-S2).
+We estimated the odds of returning for at least one follow-up measurement with logistic regression on participant characteristics, also including BMI at enrolment and enrolment cohort (Table S3).
+
+We also checked whether the fitted change depended on the model specification or participant selection.
+We refitted the model without a term for enrolment time; with participant as a fixed effect; among only participants who measured both before and after the October ceasefire; among participants measured over 30 days or more; adjusted for sex, age and residence; and among all participants, including those measured once, without a term for enrolment time and adjusted for sex, age, residence and any follow-up.
 
 We performed all analysis in R version 4.5.2 [@rcoreteamLanguageEnvironmentStatistical2025], with statistical testing and reporting using mgcv [@woodMgcvMixedGAM2000], marginaleffects [@arel-bundockHowInterpretStatistical2024], and gtsummary [@sjobergReproducibleSummaryTables2021].
-Aggregate data and all code used in this project are available at <https://github.com/cmmid/gaza-report> ([DOI]{.mark}).
+Aggregate data and all code used in this project are available at <https://github.com/cmmid/gaza-report> [@sherrattGazaReport2026].
+We received ethics approval from the London School of Hygiene and Tropical Medicine (ID 32766).
+We report following the STROBE guideline for cohort studies (Table S11) [@vonelmStrengtheningReportingObservational2007].
 
 ## Results
 
 ### Participation
 
-Between 30 July and 1 December 2025, we collected a total of 1083 records from 677 unique participant IDs.
-We included 678 (63%) weight measurements contributed by 434 participants (@fig-system).
-We reported these in real-time from 2 August, with 69% of forms reaching the server on the date reported, and 99.7% within seven days.
+Between 30 July and 1 December 2025, we collected a total of 1083 records.
+We included 678 (63%) weight measurements contributed by 434 participants (@fig-ppt).
+We publicly reported aggregated records in real-time from 2 August.
 
 ```{r}
-#| label: fig-system
+#| label: fig-ppt
 #| fig-cap: >-
-#|   A: Flow of records and participants, from all records received to the analysis sets, with exclusions by reason.
-#|   B: Weight measurements recorded each week: enrolments, follow-ups linked to an enrolment record, and follow-ups that matched no enrolment record and were excluded (hatched).
-#|   Dashed lines mark recruitment advertisements, dashboard launch, the confirmation of famine on 22 August 2025 and the ceasefire on 10 October 2025.
-#| fig-width: 12
-#| fig-height: 6
+#|   A: Flow of records and participants from collection to analysis, with exclusions by reason.
+#|   B: Weight measurements recorded each week, showing: enrolments, follow-ups linked to an enrolment record, and possible follow-ups that matched no enrolment record and were excluded (hatched).
+#|   Dashed lines mark recruitment advertisements and the ceasefire on 10 October 2025.
+#| fig-width: 9
+#| fig-height: 6.5
 
-# Participant flow. Main boxes centred on x; exclusion boxes ("side")
-# left-aligned at x. After enrolment the flow splits into the cross-sectional
-# set (left) and the follow-up branch (right). Box half-heights are estimated
-# from line count, so connectors stop at box edges.
+# Participant flow, split into cross-sectional and follow-up branches
 line_h <- 0.31
 flow_nodes <- tribble(
   ~box, ~x, ~y, ~side,
-  "received", 0, 9.75, FALSE,
-  "excluded", 0.1, 8.05, TRUE,
-  "enrolled", 0, 6.15, FALSE,
-  "cross_sectional", -0.75, 3.85, FALSE,
-  "returned", 0.75, 4.0, FALSE,
-  "implausible", 0.85, 2.7, TRUE,
-  "longitudinal", 0.75, 1.3, FALSE
+  "received", -0.4, 9.75, FALSE,
+  "excluded", -0.3, 8.05, TRUE,
+  "enrolled", -0.4, 6.15, FALSE,
+  "cross_sectional", -0.95, 3.85, FALSE,
+  "returned", 1.35, 4.0, FALSE,
+  "implausible", 1.45, 2.75, TRUE,
+  "longitudinal", 1.35, 1.1, FALSE
 ) |>
   mutate(
     label = unlist(flow_text[box]),
@@ -228,14 +208,14 @@ bottom <- \(b) node(b) - node(b, "half")
 split_y <- (bottom("enrolled") + max(top("cross_sectional"), top("returned"))) / 2
 flow_edges <- tribble(
   ~x, ~y, ~xend, ~yend, ~head,
-  0, bottom("received"), 0, top("enrolled"), TRUE,
-  0, node("excluded"), node("excluded", "x"), node("excluded"), TRUE,
-  0, bottom("enrolled"), 0, split_y, FALSE,
-  -0.75, split_y, 0.75, split_y, FALSE,
-  -0.75, split_y, -0.75, top("cross_sectional"), TRUE,
-  0.75, split_y, 0.75, top("returned"), TRUE,
-  0.75, bottom("returned"), 0.75, top("longitudinal"), TRUE,
-  0.75, node("implausible"), node("implausible", "x"), node("implausible"), TRUE
+  -0.4, bottom("received"), -0.4, top("enrolled"), TRUE,
+  -0.4, node("excluded"), node("excluded", "x"), node("excluded"), TRUE,
+  -0.4, bottom("enrolled"), -0.4, split_y, FALSE,
+  -0.95, split_y, 1.35, split_y, FALSE,
+  -0.95, split_y, -0.95, top("cross_sectional"), TRUE,
+  1.35, split_y, 1.35, top("returned"), TRUE,
+  1.35, bottom("returned"), 1.35, top("longitudinal"), TRUE,
+  1.35, node("implausible"), node("implausible", "x"), node("implausible"), TRUE
 )
 flow_arrow <- arrow(length = unit(1.8, "mm"), type = "closed")
 flow_label <- \(data, ...) {
@@ -259,8 +239,8 @@ flow_plot <- ggplot() +
   ) +
   flow_label(filter(flow_nodes, !side), fill = "white") +
   flow_label(filter(flow_nodes, side), hjust = 0, fill = "grey95") +
-  scale_x_continuous(limits = c(-1.45, 1.75)) +
-  scale_y_continuous(limits = c(0.6, 10.3)) +
+  scale_x_continuous(limits = c(-2.05, 3.6)) +
+  scale_y_continuous(limits = c(0.4, 10.3)) +
   labs(tag = "A") +
   theme_void()
 
@@ -295,50 +275,64 @@ timeline_plot <- weekly_measurements |>
   labs(x = "Week of measurement, 2025", y = "Weight measurements per week", tag = "B") +
   theme(panel.grid = element_blank(), legend.position = "bottom")
 
-system_plot <- flow_plot + timeline_plot + plot_layout(widths = c(1.2, 1))
+ppt_plot <- flow_plot + timeline_plot + plot_layout(widths = c(1, 1.15))
 
-save_fig(system_plot, "fig1-system", width = 12, height = 6)
+save_fig(ppt_plot, "fig1-ppt", width = 9, height = 6.5)
 ```
 
 Participants enrolled in two cohorts following advertised recruitment, with 258 (59%) in August-September 2025, and 176 (41%) in October-November (@tbl-characteristics; Supplement Table S1).
 Almost all participants (97%) were recruited by UNRWA.
-Half (209) of participants were aged 30-45, and 55% were female.
-These cohorts were similar in age, sex, number of children, and pre-war BMI, but differed in residence.
-Gaza City and North Gaza residents made up 47% of the first cohort, and only 13% of the second (Table S1).
+Half of participants were aged 30-45, and 55% were female.
+The two cohorts were similar in age, sex, number of children, and pre-war BMI.
+Residents of Gaza City and North Gaza made up 47% of the first cohort and only 13% of the second (Table S1), in line with the depopulation of these areas over the study period.
 
 ```{r}
 #| label: tbl-characteristics
 #| tbl-cap: >-
 #|   Characteristics of humanitarian staff who provided at least one weight measurement, with mean weight loss and crude and adjusted difference in weight change since pre-war.
-#|   Mean weight loss and differences are percentages of pre-war weight.
-#|   Adjusted estimates account for all characteristics except chronic condition (reported in Table S8).
+#|   Mean weight loss and differences shown as percentages of pre-war weight with 95% confidence intervals.
+#|   Adjusted estimates from linear regression, adjusting for all characteristics as shown except chronic condition (reported in Table S6).
 
 tbl_table1 |>
-  as_flex_table()
+  remove_footnote_header() |>
+  remove_abbreviation() |>
+  as_ft()
 ```
 
 ### Weight change over the conflict
 
 Among 434 participants in 2025, 94% had lost weight since October 2023 ("pre-war").
 In aggregate, we recorded a loss of 16.4% of mean pre-war weight.
-On average, individual participants had lost 15.6% (14.8 to 16.5) of their pre-war weight, and mean BMI fell by 4.64 (4.35 to 4.92) kg/m^2^ (Table S5).
-The prevalence of underweight BMI increased twelve-fold over this period (from 0.7% to 8.1% (of 434), a relative risk of 11.7 (4.0 to 34.4); @fig-outcomes A).
+Across individuals, participants had lost an average 15.6% (95% CI, 14.8-16.5%) of their pre-war weight, and mean BMI fell by 4.64 (4.35-4.92) kg/m^2^ (@fig-outcomes A; Table S4).
+The prevalence of underweight BMI increased almost twelve-fold, from 0.7% to 8.1% of 434 (RR 11.7 (4.0-34.4)).
 
 ```{r}
 #| label: fig-outcomes
 #| fig-cap: >-
-#|   A: Participants' BMI (kg/m2), as recalled in pre-war 2023 and as measured at enrolment in 2025, by World Health Organization BMI category at enrolment (triangles: underweight).
-#|   Inset: number of participants by BMI category pre-war and at enrolment.
+#|   A: Participants' BMI (kg/m2), as recalled in pre-war 2023 and as measured at enrolment in 2025.
 #|   Solid line indicates no change in BMI between 2023 and 2025; dotted lines indicate -10, -20 and -30% BMI over that period.
+#|   Point colour indicates BMI category at enrolment.
+#|   Inset: number of participants by BMI category pre-war and at enrolment.
 #|   Dashed reference lines indicate World Health Organization BMI thresholds.
-#|   B: Individual trajectories of weight, with each measurement relative to recalled pre-war weight, among participants with two or more measurements over the study follow-up period.
-#|   Shaded line indicates population-level trajectory (with 95% confidence band), fit to a smooth of calendar day.
-#|   Points are filled by BMI category at enrolment, as in A; larger points are each participant's first measurement.
-#|   Dashed line: the 10 October 2025 ceasefire.
-#| fig-width: 11
-#| fig-height: 5.8
+#|   B: Individual weight trajectories over follow-up, with each measurement relative to pre-war weight.
+#|   Shaded line indicates population-level trajectory, fit to a smooth of calendar day.
+#|   Circles are each participant's enrolment measurement, triangles are follow-up measurements.
+#|   Dashed line indicates the 10 October 2025 ceasefire.
+#| fig-width: 7.5
+#| fig-height: 4.4
 
 scale_lims <- c(13, 48)
+# One legend for both panels: identical fill keys merge when collected
+bmi_legend <- guides(
+  fill = guide_legend(
+    order = 1, nrow = 1,
+    override.aes = list(shape = 21, size = 2.5, alpha = 1, colour = "grey20", stroke = 0.2)
+  ),
+  shape = guide_legend(
+    order = 2, nrow = 1,
+    override.aes = list(size = 2.5, fill = "white", colour = "grey20")
+  )
+)
 bmi_cutoffs <- c(18.5, 25, 30)
 bmi_breaks <- c(bmi_cutoffs, 35, 40, 45)
 pct_loss_lines <- tibble(loss = c(0.1, 0.2, 0.3), slope = 1 - loss)
@@ -360,22 +354,17 @@ bmi_plot <- baseline |>
     hjust = 1.1, vjust = -0.3, size = 3, colour = "grey40"
   ) +
   geom_point(
-    aes(fill = bmi_category_entry, shape = bmi_category_entry),
-    colour = "grey20", stroke = 0.2, alpha = 0.85, size = 1.6
+    aes(fill = bmi_category_entry),
+    shape = 21, colour = "grey20", stroke = 0.2, alpha = 0.85, size = 1.6
   ) +
   scale_bmi_category() +
   scale_x_continuous(breaks = bmi_breaks, labels = as.character) +
   scale_y_continuous(breaks = bmi_breaks, labels = as.character) +
   coord_equal(xlim = scale_lims, ylim = scale_lims) +
   labs(x = "Pre-war BMI (kg/m2), 2023", y = "Enrolment BMI (kg/m2), 2025",
-  subtitle = "Conflict period (N = 434)", tag = "A") +
-  theme(
-    panel.grid = element_blank(),
-    legend.position = "inside",
-    legend.position.inside = c(0.98, 0.02),
-    legend.justification = c(1, 0),
-    legend.background = element_rect(fill = "white", colour = NA)
-  )
+  subtitle = "2023-2025 conflict (N = 434)", tag = "A") +
+  bmi_legend +
+  theme(panel.grid = element_blank())
 
 bmi_plot <- bmi_plot +
   inset_element(
@@ -386,32 +375,37 @@ bmi_plot <- bmi_plot +
 
 followup_all <- plot_trajectories(
   data = longitudinal,
-  subtitle = "Study follow-up period (N = 104)"
+  subtitle = "2025 follow-up (N = 104)"
 ) |>
   add_gam_fit(gam_fit_all)
 
-# Square panels of equal size: A is square by coord_equal(). Tags are set
-# per panel, as plot_annotation() mis-tags a panel that carries an inset
+# Square panels of equal size, tags per panel
 followup_all <- followup_all +
   labs(tag = "B") +
-  theme(aspect.ratio = 1, legend.position = "none")
+  bmi_legend +
+  theme(aspect.ratio = 1)
 
-outcomes_plot <- bmi_plot | followup_all
+outcomes_plot <- (bmi_plot | followup_all) +
+  plot_layout(guides = "collect") &
+  theme(
+    legend.position = "bottom",
+    legend.title = element_text(size = 10),
+    legend.text = element_text(size = 9),
+    legend.key.spacing.x = unit(2, "pt"),
+    legend.spacing.x = unit(8, "pt")
+  )
 
-save_fig(outcomes_plot, "fig2-outcomes", width = 11, height = 5.8)
+save_fig(outcomes_plot, "fig2-outcomes", width = 7.5, height = 4.4)
 ```
 
 We observed greater weight loss among those with previously higher weight.
 Before the war, 72% of participants were classified as overweight or obese (Figure S1), seeing a subsequent mean loss of 17.4% of previous weight (15.6 kg).
-Those with a normal range BMI saw a mean 11.0% loss (7.2 kg; Table S6).
+Those with a normal range BMI saw a mean 11.0% loss (7.2 kg; Table S5).
 
 We assessed potential risk factors for weight loss among participant characteristics (@tbl-characteristics; @fig-risk-factors).
 After adjustment, we observed greater weight loss with increasing age (-4.9% (-8.0 to -1.6) among those over 45, -3.3% (-6.3 to -0.2) among ages 30-45, compared to participants under 30); and among men (-3.3% (-5.2 to -1.4), compared to women).
-Adjusted weight change relative to pre-war also varied by residence.
-Weight loss was more limited among those resident in Deir Al Balah (+3.4% (0.7 to 6.1) compared to weight loss among residents of Khan Yunis and Rafah).
-
-Associations with the number of dependent children, and with professional role, weakened after adjustment.
-Among the 144 participants asked about chronic conditions, those reporting one had lost more weight (crude -5.4% (-8.7 to -2.0)), but the difference was smaller and imprecise after adjustment (-3.1% (-7.4 to 1.4), n = 139; Table S8).
+Adjusted weight change also varied by governorate, with greatest weight loss among residents of Gaza City or North Gaza (-4.6% (-7.1 to -1.9) compared to those resident in Deir Al Balah).
+Associations with the number of dependent children, and with professional role, weakened after adjustment, and we noted only imprecise evidence for an association with chronic conditions among those asked (-3.1% (-7.4 to 1.4), n = 139; Table S6).
 
 ```{r}
 #| label: fig-risk-factors
@@ -419,8 +413,8 @@ Among the 144 participants asked about chronic conditions, those reporting one h
 #|   Adjusted difference in weight relative to pre-war, by participant characteristic, compared with the reference level (open points), from the adjusted model in @tbl-characteristics.
 #|   Lines: 95% confidence intervals.
 #|   Vertical line indicates no difference.
-#| fig-width: 3
-#| fig-height: 4
+#| fig-width: 7
+#| fig-height: 6
 
 risk_factors_plot <- adjusted_estimates |>
   mutate(label = fct_rev(fct_inorder(paste(var_label, label)))) |>
@@ -442,79 +436,102 @@ risk_factors_plot <- adjusted_estimates |>
 save_fig(risk_factors_plot, "fig3-risk-factors", width = 8, height = 6)
 ```
 
-### Weight change during follow-up
+### Weight change over the study period
 
-After adjustment, participants in the October-November cohort had lost 4.3 (2.0 to 6.6) percentage points less of their pre-war weight than the August-September cohort.
-Individually, we analysed 104 participants in the longitudinal set, providing 345 measurements including enrolment (@fig-outcomes B).
-For a typical participant, weight partly recovered, with fitted weight change rising by an estimated 3.9 (2.6 to 5.1) percentage points of pre-war weight over the 124-day study period (30 July-1 December).
-The rate of change appeared to be linear over this period (a smooth fitted term with effective degrees of freedom 1.0), so we did not observe a marked change around the 10 October ceasefire.
+We considered weight at enrolment among participants enrolling in the earlier August-September cohort, compared to those enrolling later in October-November.
+After adjustment for other participant characteristics, later participants had 4.3% (2.0-6.6%) higher weight relative to their pre-war weight than those enrolling earlier (@fig-risk-factors).
 
-We explored potential selection bias in who returned for follow-up.
-We compared participants who did or did not contribute to follow-up, and did not see a difference in pre-war weight change at enrolment (mean loss 16.5% and 15.3% respectively; Table S2).
-Residents of Gaza City or North Gaza had lower odds of returning than residents of Deir Al Balah (odds ratio 0.45 (0.22 to 0.87)).
-Participants in the October-November cohort also had much lower odds of contributing repeat measurements (0.18 (0.10 to 0.33)).
-Participants with dependent children were more likely to return (about 2.2 for one, two, or three or more children, against none; Table S3).
-In other respects, those with follow-up measurements had similar characteristics to participants who did not.
-When fitting change in weight among participants in follow-up, results were consistent across four alternative choices of model and participant specification (a 3.5 to 3.8 percentage point rise; Table S9).
+We analysed 104 participants who provided 345 measurements from enrolment through follow-up (@fig-outcomes B).
+This suggested a partial weight recovery, with fitted weight change rising by an estimated 3.9 (2.6-5.1) percentage points of pre-war weight over the 124-day study period (30 July-1 December).
+The rate of change appeared to be linear over this period (a smooth fitted term with effective degrees of freedom 1.0).
+The model converged with reasonable fit diagnostics (Figure S2).
+
+### Sensitivity analysis
+
+We considered the impact of participant loss to follow-up.
+We saw similar weight change from pre-war to enrolment, between participants who did or did not contribute to follow-up (mean loss 16.5% and 15.3% respectively; Table S2).
+Participants in the October-November cohort, and those resident in Gaza City or North Gaza, had lower odds of contributing repeat measurements (respectively, an adjusted OR of 0.18 (0.10-0.33) compared to the August-September cohort, and 0.45 (0.22-0.87) compared to Deir al Balah).
+Participants with dependent children were more likely to return (aOR 2.2 for one, two, or three or more children, against none; Table S3).
+Our results for the change in weight over the follow-up period were consistent across six alternative choices of participant inclusion criteria and model specification (within the range of a 3.5 to 4.0 percentage point rise; Table S7).
 
 ## Discussion
 
 During a period of conflict-induced famine in the Gaza Strip, over 430 humanitarian staff measured and reported their own changing weight.
-By August-November 2025 they had lost on average about one-sixth of their pre-war weight.
-Weight loss was near universal and greatest among older participants.
-We observed some very limited partial recovery by December 2025.
+From 2023 to 2025, we recorded an aggregate loss of 16.4% of mean pre-war weight; on average, individual participants had lost 15.6% (95% CI, 14.8-16.5%) of their pre-war weight.
+Weight loss was almost universal, greatest among older participants, and included a near twelve-fold rise in the prevalence of those technically classified as underweight.
+Over a four-month study period, we observed a small (+4 percentage points) amount of weight recovery by December 2025.
 
-Our findings support a timeline of evidence for the rapid and severe loss of food security among the adult population in Gaza.
-Since conflict began in October 2023, food was scarce from November 2023 through to February 2024 [@checchiWartimeFoodAvailability2025; @davisAvailabilityConsumptionInequality2026].
-By April 2024, residents of northern Gaza had lost a mean 22% of their pre-war weight, with greater losses at older ages [@alnabihFoodInsecurityWeight2024].
-This was followed by a period of greater food availability over May-July 2024, when adults across Gaza reported a more limited loss of 13.4% compared to pre-war weight [@farisCatastrophicFamineGaza2025].
-By 2025, food availability had collapsed again.
-In July 2025, average consumption fell as low as 1,054 kcal per person per day [@davisAvailabilityConsumptionInequality2026].
+Our findings fit within a timeline of the cyclical degradation of food security, with indiscriminate health consequences across the adult population in Gaza.
+After October 2023, food supply was increasingly limited through early 2024 [@checchiWartimeFoodAvailability2025; @davisAvailabilityConsumptionInequality2026].
+In April 2024, a survey in northern Gaza governorate found adults had lost a mean ratio of 22% compared to their pre-war weight [@alnabihFoodInsecurityWeight2024].
+This was followed by a period of greater food availability.
+By July 2024, a survey of adult householders across the Gaza Strip showed a more limited weight loss compared to pre-war (mean ratio 13.4% [@farisCatastrophicFamineGaza2025]).
+Food availability then collapsed following Israel's full border closure in March 2025.
 
-At this point, our study participants reported having lost a proportion of their pre-war weight within the range of earlier studies.
-Meanwhile, we note that our participants' BMI at enrolment was typically higher than the comparable Gazan adult population a year earlier [@farisCatastrophicFamineGaza2025].
-This could reflect either that our sample were relatively more protected from food insecurity; or the experience of partial weight restoration during the early-2025 ceasefire, followed by renewed loss.
+In July 2025, as this study began, food imports had fallen below the level of population sustenance, and average consumption fell to an estimated 1,054 kcal per person per day [@davisAvailabilityConsumptionInequality2026].
+This was particularly severe in central and northern Gaza, and in August 2025 an IPC analysis formally concluded that famine was occurring in Gaza governorate [@famineReviewCommitteeGazaStrip2025].
+Following a ceasefire on 10 October 2025, food assistance expanded and the population classified as in crisis (Phase 3) or worse reduced from 100% to 77% [@ipcGazaStripAcute2025; @ipcGazaStripSpecialBrief2026].
 
-Our participants were not representative of adults in the Gaza Strip, and our estimates likely understate weight loss in the general adult population.
-Most importantly, all participants were employed, in contrast to an 8% adult employment rate in Gaza in 2025 [@pcbsEconomicForecasts2025].
-Employment typically protects food security through purchasing power [@sen1981poverty], and humanitarian staff may also have had better access to aid.
-Employment status may modify the effect of demographic characteristics, which we could not test in an employed sample.
-This affects our finding that men lost comparatively more weight than women.
-While 55% of participants in our study were women, women were only 12% of employed adults in Gaza [@pcbsLabourForceSurvey2023].
-A convenience survey of adults in North Gaza and Gaza City used a similar measured-against-recalled weight design, and showed no sex difference in weight change over the conflict [@alnabihFoodInsecurityWeight2024].
+Our participants were employed humanitarian staff, yet were not clearly better protected from weight loss than other adults in Gaza.
+For example, by 2025 our participants had lost at least as large a proportion of their pre-war weight as a 2024 convenience sample of adult householders (16.4% vs 13.4%) [@farisCatastrophicFamineGaza2025].
+However, our cohort had a higher mean pre-war BMI (28.6 vs 26.4 kg/m^2^; Table S10), so our participants were less likely to become classified as underweight after starting from a higher level.
+This suggests our estimates likely understate the prevalence and severity of adult undernutrition in Gaza.
 
-Our findings depend on a self-selected sample's recall of weight up to two years later, and we considered the resulting potential for bias in our findings.
-Random error in participant recall would inflate the apparent loss among people who over-recall, creating regression to the mean.
-This could partly explain our observation of disproportionately greater weight loss among those with higher pre-war BMI.
-Alternatively, men in our study may have relatively over-recalled their pre-war weight.
-When compared with population references for pre-war BMI, women in our cohort recalled a relatively lower, and men a relatively higher, pre-war BMI (Tables S10-S11) [@abuhamadHypertensionCascadeCare2022; @ncdriscObesityRisePlateaus2026].
-Without measured pre-war weight, it was difficult to distinguish between selection and recall bias.
+We interpret results with attention to the effect of employment on food security.
+With an 8% adult employment rate in Gaza in 2025 [@pcbsEconomicForecasts2025], our humanitarian staff cohort cannot represent population-level effects.
+Employment typically protects food security through greater purchasing power [@sen1981poverty], and humanitarian staff may also have had better knowledge of or access to aid.
+This makes the scale of our results surprising and indicative of the systemic destruction of food security across the Gazan population.
+Any protective effect of employment offered only limited support against an extreme restriction of food supply and inflation in food prices [@ipcRTQRGazaStrip2026].
 
-From this perspective, our study design made trade-offs between a participant-led approach, and our ability to analyse change over the study period.
-We recruited voluntary, self-selected participants who were delivering humanitarian response while living through the same hunger and insecurity as the population they worked to support.
-We aimed to minimise additional burden from study participation.
-We also prioritised participant anonymity, given the wider context of insecurity [@tawilsouriDigitalOccupationGazas2012].
+Selection on employment status might explain our observation of a moderate difference in weight change by sex.
+We found that men lost more weight than women, a result that held after adjustment for covarying characteristics.
+By contrast, a 2024 convenience survey of adults in North Gaza and Gaza City found no sex difference in weight change over the conflict [@alnabihFoodInsecurityWeight2024].
+Recruiting only employed staff may have introduced collider bias into our estimate.
+We note that women were only 12% of employed adults in Gaza in 2023 [@pcbsLabourForceSurvey2023].
+Employment status likely depends on sex, and also on factors that could protect against weight loss, such as education, household income, or other earning adults in the household.
+Because few women in Gaza are in paid work, the women in our cohort are likely to have been more selected on these factors than the men, and so may have lost less weight than women in the wider population.
+The sex difference in our cohort may overstate any difference in the wider population.
+Alternatively, non-random error in participant recall might explain the apparent difference in weight change by sex.
+When compared with population references for pre-war BMI, women in our cohort recalled a relatively lower, and men a relatively higher, pre-war BMI (Tables S8-S9) [@abuhamadHypertensionCascadeCare2022; @ncdriscObesityRisePlateaus2026].
+Without measured pre-war weight, it was difficult to distinguish between biases from selection or recall.
 
-However, unstructured changes in the participant mix affected our estimates.
-Participants enrolling in October-November appeared to have lost less weight than those enrolling in August-September, but these two cohorts also lived in different areas, with likely different access to resources.
-Three in four participants did not return for any repeat measurement.
-We attribute this loss to follow-up partly to a lack of structured incentives for study participation, as well as to participant motivation in the face of both public and personal crises.
-Meanwhile, the anonymised participant IDs made data linkage prone to error, and we were unable to use a substantial portion of the follow-up measurements we collected.
+Our estimates of change over the follow-up period depended on participants self-selectively reporting repeated measurements.
+We saw substantial loss to follow-up, with three in four participants recording only a single measurement.
+We attribute this partly to our design of anonymised participant IDs, which were prone to data entry errors and left a substantial share of follow-up measurements unidentified: 214 of 570 follow-up records matched no enrolment ID, mostly composite IDs entered after the second round of recruitment (Supplement).
+We also considered a lack of incentives or motivation to repeatedly participate in the face of both public and personal crises.
+Participants who did and did not return had lost a similar share of pre-war weight at enrolment.
+The fitted change was also consistent when restricted to change within participants.
+However, we could not assess the impact of weight change itself on whether participants repeated contributions.
+If participants who continued to lose weight were less likely to return, our findings would overstate recovery.
+On the other hand, if those recovering weight lost motivation to self-report, we would understate weight recovery.
+More broadly, without a denominator of eligible staff, we could not assess how participants who volunteered differed from those who did not.
 
-Adult weight can give an accessible signal of long-term, cumulative deprivation that is a useful complement to child anthropometry.
-Surveys among children suggest at least three substantial rises and falls in child acute wasting, ranging between c.5-15%, in periods of greater or lesser aid access from early 2024 through 2025 [@horinoAssessmentMalnutritionPreschoolaged2025].
-However, child anthropometry may lag behind the burden among adults.
-As coping mechanisms are exhausted, adults go without food to feed children [@howeFamineSystemsNew2018; @checchiEvolutionChildAcute2024].
-By the same mechanism, adult recovery may respond more slowly than children's, and we saw only partial weight recovery by December 2025.
-This suggests adult populations may give a more consistent, cumulative indicator of deprivation, than the child anthropometry relied on by famine classification systems [@howeFamineSystemsNew2018].
-At the same time, we emphasise that our analysis of weight change is only a partial reflection of the impact of food insecurity.
-Qualitative research in Gaza describes distressing experiences of intense hunger, and repetitive, low-quality diets [@hamamraChildhoodSiegeBattling2025; @ashourImpactWarGaza2025], which we have not attempted to document here.
-We therefore consider our results closer to a sentinel survey of adult weight, than representative of the total burden of food security.
+Our study design made several trade-offs between a participant-centred approach and representative analysis of weight change.
+We co-designed and implemented this study collaboratively across institutions, with technical support in the UK led by requests from humanitarian aid organisations in Gaza.
+We recruited humanitarian staff on request of the organisations involved, and as an accessible group who could measure themselves with little additional resource, drawing on experience in participatory surveillance [@mcneilLandscapeParticipatorySurveillance2022; @ratnayakePeoplecentredSurveillanceNarrative2020a].
+However, the design and analysis of this study came from researchers in the UK, and we recognised the risk of both inefficiency and inequity in this research partnership [@TRUST].
+Our participants operated in an environment of long-term and multidimensional insecurity [@tawilsouriDigitalOccupationGazas2012], and participation asked an additional burden on those living through the same hunger and insecurity as the population they worked to support.
 
-In this work, we aimed to develop a participatory surveillance system for adult weight in the Gaza Strip and estimate weight change across the conflict and during the 2025 famine.
-Humanitarian staff had lost on average about one-sixth of their pre-war weight, and recovered only partly between August and December 2025.
-These findings add to a convergence of evidence for the breadth and depth of the conflict's impact on food insecurity in Gaza, undermining public and personal health. Our participatory approach and remote data collection system ran without substantial resources, or identifiable data.
-This demonstrates the opportunity for collecting essential health data remotely and confidentially in near real-time, even in insecure settings, and this approach could transfer to other crises.
+Fluctuations in food security are difficult to capture, and real-time monitoring of adult weight can provide a missing signal of population health.
+This complements more typical use of child anthropometry during acute famine conditions.
+Empirical evidence for food insecurity in Gaza has largely consisted of surveys of children's mid-upper arm circumference [@howeFamineSystemsNew2018].
+This showed cyclical prevalence of child acute wasting between c.5% and 15% from early 2024 to 2025, reflecting access to food aid [@horinoAssessmentMalnutritionPreschoolaged2025].
+However, adult and child nutritional status may behave differently under the same conditions.
+As households exhaust coping mechanisms, adults may go without food in order to feed children [@howeFamineSystemsNew2018; @checchiEvolutionChildAcute2024].
+Adult nutrition would therefore be expected to decline first; in the same way, adults' nutritional status remains poor as children's improves.
+For example, by mid-2026, adults in households with children under five still reported restricting their own food intake, even while acute malnutrition among children had improved to "acceptable" levels [@ipcGazaStripSpecialBrief2026].
+This suggests that a sentinel population of adults, as in this study, could provide a leading signal of population nutrition as famine conditions develop, and a lagged indicator as conditions improve.
+
+From a wider perspective, we emphasise that weight change is only a partial reflection of both nutritional status and the welfare impacts of food insecurity [@burchiFoodAvailabilityNutritional2016; @howeFamineSystemsNew2018].
+Other indicators of nutrition-related morbidity include, for example, incidence of pneumonia, acute diarrhoea, or infection following trauma injuries, common in undernourished individuals.
+Research in Gaza also describes distressing experiences of intense hunger; repetitive, low-quality diets; and specific anxiety and disordered eating linked to food insecurity [@hamamraChildhoodSiegeBattling2025; @ashourImpactWarGaza2025].
+Traditional functions of public health are incapacitated.
+By April 2026, fewer than half of health services were functional, while 88% of above-ground water and sanitation assets were damaged, and 75% of housing was damaged or destroyed [@ipcGazaStripSpecialSnapshot2026].
+At the same time, entry of goods remains below pre-war levels [@ipcGazaStripSpecialBrief2026], and coverage of food assistance has fallen, while the operating licenses of 37 international non-governmental organisations are in doubt [@ipcGazaStripSpecialSnapshot2026].
+
+This work adds to a convergence of evidence demonstrating the catastrophic impact of conflict on food insecurity and nutrition in Gaza.
+Sustained monitoring, alongside cessation of hostilities, humanitarian access and a multi-sectoral response, is necessary to prevent and reverse famine [@ipcFamineFactSheet2026].
+The approach taken here can support people living through crisis to systematically document their own experience, while adding to the weight of evidence with which to anchor international accountability for public health.
 
 ## Acknowledgments
 
@@ -526,12 +543,12 @@ The study was not funded.
 
 ## Competing interests
 
-All authors declare that they have no conflicts of interest ([Zeina CoI with FRC?]{.mark}).
+All authors declare that they have no conflicts of interest.
 
 ## Data availability statement
 
 Aggregate data and all code are available at <https://github.com/cmmid/gaza-report>.
-We retain anonymised individual-level data confidentially to reduce the risk of de-anonymisation in small samples; they are shareable on request.
+We retain anonymised individual-level data confidentially to reduce the risk of de-anonymisation in small samples, shareable on request.
 
 ## References
 

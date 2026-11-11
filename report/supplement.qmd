@@ -1,7 +1,8 @@
 ---
 title: "Supplementary information"
-subtitle: "Participatory surveillance of adult weight among humanitarian staff in the Gaza Strip, 2025"
+subtitle: "Real-time signals of food insecurity: a co-designed cohort with humanitarian staff in the Gaza Strip, 2025"
 bibliography: gaza.bib
+csl: bmj.csl
 crossref:
   fig-title: "Figure S"
   tbl-title: "Table S"
@@ -15,6 +16,9 @@ format:
     embed-resources: true
   docx:
     toc: false
+    filters:
+      - path: docx-cell-paragraph.lua
+        at: post-render
 execute:
   echo: false
   warning: false
@@ -38,18 +42,36 @@ Katharine Sherratt, Kevin van Zandvoort, Zeina Jamaluddine, Clara Brigitta, Ciar
 
 We collected weight data in two Open Data Kit forms: an enrolment form carrying all characteristics, and a follow-up form carrying date and weight only, both identified by the participant's anonymised ID.
 
-### Recruitment and selection
+### Exclusion criteria
+
+Exclusions were dominated by 214 (20%) follow-up records that we could not link to a previously enrolled participant (see below).
+We also excluded 148 records as duplicates, 37 that refused consent, and 6 for a missing or implausible value (Figure 1A of the manuscript).
+
+#### Unlinked follow-up measurements
+
+We collected 570 follow-up records.
+Among valid records, 214 (from 202 participant IDs) did not match any enrolment record participant ID, so we could not identify these with pre-war weight, height or demographics.
+Almost all of these unlinked measurements came after the second round of recruitment (86% appeared over 8-12 November 2025; Figure 1B of the manuscript).
+
+These may be participants who entered a different ID combination from their enrolment ID, or who only ever used the follow-up form without enrolling.
+Linkage failure was likely partly due to mistyped composite IDs: 68% of follow-up records with a composite ID were unmatched, against 14% of those with a national ID.
+All identifiers were stored only as one-way hashes, so mistyped IDs could not be corrected.
+At least some of these records also come from people who only ever used the follow-up form.
+In the 8-12 November week we saw more unmatched composite IDs (157) than there were participants ever enrolled with a composite ID (137).
+Unlinked measurements were also heavier than linked follow-up measurements (median 71 against 66 kg).
+
+### Recruitment and checks for selection bias
 
 Participants enrolled in two cohorts, August-September and October-November 2025 (Figure 1B of the manuscript).
 
-We assessed selection by reporting distributions of enrolment characteristics across subgroups: enrolment cohort, and whether participants provided one or multiple measurements over time.
+We compared enrolment characteristics by cohort and by whether participants returned for follow-up.
 
 ```{r}
 #| label: tbl-balance-cohort
 #| tbl-cap: "Enrolment characteristics by enrolment cohort."
 
 tbl_balance_cohort |>
-  as_flex_table()
+  as_ft()
 ```
 
 ```{r}
@@ -57,7 +79,7 @@ tbl_balance_cohort |>
 #| tbl-cap: "Enrolment characteristics by whether the participant contributed any follow-up measurement."
 
 tbl_balance_followup |>
-  as_flex_table()
+  as_ft()
 ```
 
 We modelled the odds of contributing any follow-up measurement by participant characteristic (age, sex, residence, dependent children, role, BMI at enrolment and enrolment cohort) with logistic regression.
@@ -69,47 +91,14 @@ We modelled the odds of contributing any follow-up measurement by participant ch
 fit_return |>
   tbl_regression(exponentiate = TRUE, label = labels_for(return_vars)) |>
   modify_column_hide("p.value") |>
-  as_flex_table()
+  as_ft()
 ```
 
 Change since pre-war was similar among participants who did or did not contribute follow-up measurements (mean loss 16.5% and 15.3% respectively).
-Participants with dependent children had higher odds of returning than those with none (odds ratio 2.20 (1.09 to 4.42) for one child, similar for two or more), and residents of Gaza City and North Gaza lower odds than residents of Deir Al Balah (0.45 (0.22 to 0.87)).
-Participants in the October-November cohort had much lower odds of returning (0.18 (0.10 to 0.33)).
+Participants with dependent children had higher odds of returning than those with none (odds ratio 2.20 (1.09-4.42) for one child, similar for two or more), and residents of Gaza City and North Gaza lower odds than residents of Deir Al Balah (0.45 (0.22-0.87)).
+Participants in the October-November cohort had much lower odds of returning (0.18 (0.10-0.33)).
 
-### Exclusion criteria
-
-Exclusions were dominated by 214 (20%) follow-up records that we could not link to a previously enrolled participant (see below).
-We also excluded 148 records as duplicates, 37 that refused consent, and 6 for a missing or implausible value.
-
-```{r}
-#| label: tbl-exclusions
-#| tbl-cap: >-
-#|   Weight measurements by exclusion criterion.
-
-exclusions |>
-  transmute(
-    `Criteria` = reason,
-    Measurements = n_records,
-    Participants = n_participants,
-    `Measurements remaining` = n_remaining,
-    `Participants remaining` = n_participants_remaining
-  ) |>
-  ft()
-```
-
-#### Unlinked follow-up measurements
-
-We collected 570 follow-up records.
-Among valid records, 214 (from 202 participant IDs) did not match any enrolment record participant ID, so we could not identify these with pre-war weight, height or demographics.
-Almost all of these unlinked measurements came after the second round of recruitment (86% appeared over 8-12 November 2025; Figure 1B of the manuscript).
-
-These may be participants who entered a different ID combination from their enrolment ID, or who only ever used the follow-up form without enrolling.
-Linkage failure was likely partly due to mistyped composite IDs: 68% of follow-up records with a composite ID were unmatched, against 14% of those with a national ID.
-All identifiers were stored only as one-way hashes, so mistyped IDs could not be corrected.
-At least some of these records also come from people who only ever used the follow-up form; in the 8-12 November week we saw more unmatched composite IDs (157) than there were participants ever enrolled with a composite ID (137).
-Unlinked measurements were also heavier than linked follow-up measurements (median 71 against 66 kg).
-
-## Analysis
+## Supplementary analysis
 
 ### Change over conflict period
 
@@ -118,7 +107,7 @@ Unlinked measurements were also heavier than linked follow-up measurements (medi
 #| tbl-cap: "Mean change from self-recalled pre-war (October 2023) weight to the first measured weight at enrolment."
 
 tbl_change |>
-  as_flex_table()
+  as_ft()
 ```
 
 ```{r}
@@ -126,7 +115,7 @@ tbl_change |>
 #| tbl-cap: "Mean (95% CI) weight lost from pre-war to enrolment by pre-war BMI category, in kilograms and as a percentage of pre-war weight, with the number underweight (BMI < 18.5 kg/m2) at enrolment."
 
 tbl_loss_by_bmi |>
-  as_flex_table()
+  as_ft()
 ```
 
 ```{r}
@@ -151,34 +140,6 @@ bmi_pyramid_plot <- bmi_category_long |>
 save_fig(bmi_pyramid_plot, "figS1-bmi-pyramid", width = 8, height = 4.5)
 ```
 
-## Mean, median and geometric mean of change
-
-```{r}
-#| label: tbl-centre-comparison
-#| tbl-cap: >-
-#|   Sensitivity to the choice of summary: each mean reported in the manuscript, with the median and geometric mean of the same quantity.
-#|   Mean: t-based 95% CI, except standardisation rows.
-#|   Median: exact order-statistic 95% CI.
-#|   Geometric mean: exp(mean log ratio of weight to pre-war weight) - 1, as a percentage, with a t-based 95% CI on the log scale; not applicable to BMI change or to percentage-point differences.
-#|   Standardisation rows: as Table S12, with percentile 95% intervals from 2000 bootstrap resamples and a weighted median.
-#|   Not shown: mean pre-war BMI against the 2020 survey (Table S10), which publishes means only.
-
-bind_rows(
-  centres_prewar, centres_context, centres_participation
-) |>
-  format_centres() |>
-  select(
-    `Manuscript section` = location,
-    Quantity = quantity,
-    Group = group,
-    n,
-    `Mean (95% CI)` = mean,
-    `Median (95% CI)` = median,
-    `Geometric mean (95% CI)` = geometric_mean
-  ) |>
-  ft()
-```
-
 ### Risk factors for weight change since pre-war
 
 Chronic condition was recorded for only 144 participants, almost all enrolling from late October, so we did not include it in the main adjusted model and analysed it separately among the participants asked.
@@ -188,28 +149,10 @@ Chronic condition was recorded for only 144 participants, almost all enrolling f
 #| tbl-cap: "Difference in weight change since pre-war for participants reporting a chronic condition, adjusted, among those who were asked."
 
 tbl_chronic |>
-  as_flex_table()
+  as_ft()
 ```
 
 ### Weight change during follow-up
-
-```{r}
-#| label: fig-followup-spanning
-#| fig-cap: >-
-#|   Individual trajectories of weight relative to pre-war, with the fitted population-level trajectory (line, 95% confidence band) from a smooth of calendar day.
-#|   Participants measured both before and after the 10 October 2025 ceasefire (dashed line), with the model refitted to this subset.
-#|   Points are filled by BMI category at enrolment (triangles: underweight), as in Figure 2 of the manuscript; larger points are each participant's first measurement.
-#| fig-width: 7
-#| fig-height: 5
-
-followup_spanning <- plot_trajectories(
-  longitudinal_spanning,
-  paste(n_spanning, "participants measured either side of the ceasefire")
-) |>
-  add_gam_fit(gam_fit_spanning)
-
-save_fig(followup_spanning, "figS2-followup-spanning", width = 7, height = 5)
-```
 
 ```{r}
 #| label: tbl-followup-sensitivity
@@ -217,7 +160,9 @@ save_fig(followup_spanning, "figS2-followup-spanning", width = 7, height = 5)
 #|   Sensitivity of the fitted change in weight over follow-up to model specification and participant selection.
 #|   Change: fitted weight on the last day of follow-up minus the first day, percentage points of pre-war weight (delta-method 95% CI).
 #|   Main model: smooth of calendar day, linear term for day of enrolment, participant random intercept.
-#|   Each other row changes one element; with participant as a fixed effect, change is averaged over participants.
+#|   Each other row changes one element, except the last; with participant as a fixed effect, change is averaged over participants.
+#|   Adjusted rows: participants with missing sex, age or residence are dropped.
+#|   All participants: includes those measured only once, who inform the change only by comparison between participants enrolled at different times.
 #|   EDF: effective degrees of freedom of the calendar-day smooth (1 = linear).
 
 followup_sensitivity |>
@@ -232,6 +177,21 @@ followup_sensitivity |>
   ft()
 ```
 
+```{r}
+#| label: fig-followup-diagnostics
+#| fig-cap: >-
+#|   Diagnostics for the main follow-up model (mgcv::gam.check), on the log scale of weight relative to pre-war.
+#|   Top left: quantile-quantile plot of deviance residuals.
+#|   Top right: residuals against the linear predictor.
+#|   Bottom left: histogram of residuals.
+#|   Bottom right: observed against fitted values.
+#| fig-width: 7
+#| fig-height: 6
+#| results: hide
+
+gam.check(fit_gam)
+```
+
 ## Population comparisons
 
 ### Pre-war BMI
@@ -239,7 +199,7 @@ followup_sensitivity |>
 #### 2020 population survey
 
 We compared the pre-war BMI of participants aged 40-59 (the age bands with 10 or more participants) with an independent 2020 survey of a representative sample of the Gaza Strip population in this age group [@abuhamadHypertensionCascadeCare2022].
-Participants shared a similar weight distribution; however, mean BMI was lower among women in our sample compared to the representative survey (by 2.1-2.5 kg/m^2^), and higher among men (by 1.5-2.1 kg/m^2^; Table S10).
+Participants shared a similar weight distribution; however, mean BMI was lower among women in our sample compared to the representative survey (by 2.1-2.5 kg/m^2^), and higher among men (by 1.5-2.1 kg/m^2^; Table S8).
 
 ```{r}
 #| label: tbl-external
@@ -299,66 +259,6 @@ prewar_reference |>
 
 ### Adult weight change
 
-#### Change since pre-war standardised to adults in the Gaza Strip
-
-We asked what mean weight change, mean BMI change and the prevalence of underweight at enrolment would be among adults in the Gaza Strip, if each sex and age group had the mean observed among study participants of that group.
-We used direct standardisation, as the mean within each sex and age group (under 30, 30-45, over 45), weighted by that group's share of the population.
-The population was the projected mid-2025 population of the Gaza Strip aged 18-65, by sex and single year of age, from the December 2025 release of the International Database [@uscensusbureauInternationalDatabase2025].
-It is projected from the 2017 census and is not adjusted for deaths or displacement during the war.
-Participants were aged 19-65.
-We excluded 17 participants with no recorded age (n = 417).
-We took 95% intervals as percentiles of 2000 bootstrap resamples of participants, holding population shares fixed.
-
-```{r}
-#| label: tbl-standardised
-#| tbl-cap: >-
-#|   Change from pre-war to enrolment and underweight (BMI < 18.5 kg/m2) at enrolment, by sex and age group, among participants and standardised to adults in the Gaza Strip.
-#|   Standardised: the mean in each sex and age group, weighted by that group's share of the projected mid-2025 population aged 18-65 (US Census Bureau International Database), which is not adjusted for deaths or displacement during the war.
-#|   95% intervals from 2000 bootstrap resamples of participants, with population shares held fixed.
-
-standardised_row <- function(row) {
-  estimates <- change_standardised |>
-    filter(population == row) |>
-    mutate(text = fmt_ci(estimate, low, high, if_else(outcome == "bmi_change", 2, 1)))
-  set_names(estimates$text, estimates$outcome)
-}
-
-bind_rows(
-  standard_cells(standard_set) |>
-    mutate(age = factor(age, levels = age_levels)) |>
-    arrange(sex, age) |>
-    transmute(
-      group = paste0(sex, ", ", str_to_lower(str_remove(age, "Age "))),
-      participants = sprintf("%d (%.0f%%)", n, 100 * participant_share),
-      gaza = sprintf("%.0f%%", 100 * population_share),
-      pct_weight_change = sprintf("%.1f", pct_weight_change),
-      bmi_change = sprintf("%.2f", bmi_change),
-      pct_underweight_entry = sprintf("%.1f", pct_underweight_entry)
-    ),
-  tibble(
-    group = "All participants",
-    participants = sprintf("%d (100%%)", nrow(standard_set)),
-    gaza = "",
-    !!!standardised_row("observed")
-  ),
-  tibble(
-    group = "Standardised to adults in the Gaza Strip",
-    participants = "",
-    gaza = "100%",
-    !!!standardised_row("standardised")
-  )
-) |>
-  select(
-    `Sex and age` = group,
-    `Participants, n (%)` = participants,
-    `Adults in the Gaza Strip, %` = gaza,
-    `Weight change, % of pre-war` = pct_weight_change,
-    `BMI change, kg/m2` = bmi_change,
-    `Underweight at enrolment, %` = pct_underweight_entry
-  ) |>
-  ft()
-```
-
 #### Comparable estimates of change
 
 We compared weight change in this study with other studies of adults in the Gaza Strip since October 2023 that reported weight before and during the war [@alnabihFoodInsecurityWeight2024; @farisCatastrophicFamineGaza2025].
@@ -379,4 +279,80 @@ literature_comparison |>
 
 ### Survey questionnaires
 
-[TODO: add enrolment and follow-up survey forms]
+We collected data with two Open Data Kit forms, each available in English and Arabic.
+Participants first read the information sheet (dated 31 July 2025) and gave consent on the enrolment form; refusing consent ended the form.
+
+Consent statements (yes/no):
+
+- I have read the information sheet dated 31st July 2025 for this project and I have or can access a copy of it if needed.
+- I understand that my consent is voluntary and that I am free to withdraw this consent at any time without giving any reason and without my job or legal rights being affected.
+- I understand that results from the project may be published in scientific journals or reports, without the use of any information that could identify me.
+- I agree to take part in this project by providing data on myself.
+
+Enrolment form:
+
+- Participant ID: either 
+  - the 9-digit Palestinian national ID
+  - a composite of the initials of first name, family name, father's name and mother's name, date of birth (dd/mm/yy) and the initial of a favourite Palestinian artist (e.g. FASY031178S). 
+  - The ID was hashed on the device before upload.
+- Organisation
+- Date (today by default, with the option to select a past date)
+- Date of birth
+- Sex (male, female, other/prefer not to say)
+- Governorate of current residence (North Gaza, Gaza City, Deir al Balah, Khan Younis, Rafah)
+- Role (expatriate staff, national staff, consultant/contractor, casual/daily worker, other, prefer not to say)
+- Number of children aged under 10 years in Gaza that the participant is currently responsible for feeding daily
+- Estimated height (cm)
+- Estimated weight before the war (kg, to 0.1)
+- Weight today (kg, to 0.1)
+- Chronic health conditions, with free text for "other" (added 10 August 2025)
+- Comments (optional free text)
+
+Follow-up form:
+
+- Participant ID, as above
+- Date of measurement (today by default, with the option to select a past date)
+- Weight on that date (kg, to 0.1)
+
+## Reporting checklist
+
+We report this study following the STROBE guideline for cohort studies [@vonelmStrengtheningReportingObservational2007].
+
+| Item | No. | Recommendation | Where reported |
+|------------|----|------------------------------------|------------------------------------|
+| Title and abstract | 1a | Indicate the design with a commonly used term | Abstract, Methods ("cohort study") |
+| | 1b | Informative and balanced summary | Abstract |
+| Background, rationale | 2 | Scientific background and rationale | Introduction |
+| Objectives | 3 | Objectives, including prespecified hypotheses | Introduction (three aims); no prespecified hypotheses |
+| Study design | 4 | Key elements of design early in the paper | Methods, Study design |
+| Setting | 5 | Setting, locations, dates of recruitment, exposure, follow-up and data collection | Methods, Study design (agencies, advertisements in July and October 2025, scales, data entry); Results, Participation (30 July to 1 December 2025) |
+| Participants | 6a | Eligibility, sources and methods of selection; methods of follow-up | Methods, Study design (staff and contractors of SCI and UNRWA's Health Section; self-selected after advertisement; voluntary return to measure) |
+| | 6b | Matched studies: matching criteria | Not applicable |
+| Variables | 7 | Define outcomes, exposures, predictors, confounders, effect modifiers | Methods, Study design (baseline characteristics) and Analysis (outcomes, adjustment set) |
+| Data sources, measurement | 8 | Sources of data and methods of assessment | Methods, Study design (calibrated scales, recalled pre-war weight, self-reported height, Open Data Kit forms) |
+| Bias | 9 | Efforts to address potential sources of bias | Methods, Analysis (plausibility checks, balance, return for follow-up); Results, Sensitivity analysis; Discussion (recall and selection bias) |
+| Study size | 10 | How the study size was arrived at | Not reported: open voluntary recruitment, no sample size calculation |
+| Quantitative variables | 11 | Handling of quantitative variables; groupings and why | Methods, Analysis (BMI categories, enrolment cohorts, log weight ratio, combined governorates); Table 1 (age groups) |
+| Statistical methods | 12a | All statistical methods, including control for confounding | Methods, Analysis |
+| | 12b | Subgroups and interactions | No interaction terms; change by enrolment cohort in Table S4 |
+| | 12c | Missing data | Missing counts in Table 1; complete-case analysis, not stated in the text |
+| | 12d | Loss to follow-up | Methods, Analysis (logistic regression of return); follow-up model uses all available measurements |
+| | 12e | Sensitivity analyses | Methods, Analysis (six refits; Table S7) |
+| Participants | 13a | Numbers at each stage of study | Results, Participation; Figure 1A |
+| | 13b | Reasons for non-participation at each stage | Figure 1A (exclusions by reason); number of staff invited unknown |
+| | 13c | Flow diagram | Figure 1A |
+| Descriptive data | 14a | Characteristics of participants; exposures and confounders | Table 1; Tables S1-S2 |
+| | 14b | Number with missing data for each variable | Table 1 |
+| | 14c | Follow-up time | Results, Weight change over the study period (124-day study period); Table S7 (days and measurements per analysis set) |
+| Outcome data | 15 | Numbers of outcome events or summary measures over time | Results, Weight change over the conflict and Weight change over the study period; Figure 2; Tables S4-S5 |
+| Main results | 16a | Unadjusted and adjusted estimates with precision; confounders adjusted for | Table 1; Figure 3; Results; Methods, Analysis (adjustment set) |
+| | 16b | Category boundaries for categorised continuous variables | Methods, Analysis (BMI categories); Table 1 (age groups) |
+| | 16c | Relative risk translated into absolute risk | Results, Weight change over the conflict (underweight 0.7% to 8.1%, relative risk 11.7) |
+| Other analyses | 17 | Subgroups, interactions, sensitivity analyses | Tables S3, S6-S10; Figure S2 |
+| Key results | 18 | Key results with reference to objectives | Discussion, first paragraph |
+| Limitations | 19 | Sources of bias or imprecision; direction and magnitude | Discussion (representativeness, recall and selection bias, participant mix, linkage) |
+| Interpretation | 20 | Cautious overall interpretation | Discussion |
+| Generalisability | 21 | External validity | Discussion (employment, sex differences) |
+| Funding | 22 | Source of funding and role of funders | Funding |
+
+: STROBE checklist for cohort studies, with the location of each item in the manuscript and supplement. {#tbl-strobe}
