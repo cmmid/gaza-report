@@ -20,11 +20,10 @@ Repo structure:
   - Rendered drafts: [manuscript.docx](report/manuscript.docx), [supplement.docx](report/supplement.docx)
   - [manuscript.qmd](report/manuscript.qmd): manuscript text, main tables and figures
   - [supplement.qmd](report/supplement.qmd): supplementary tables and figures
-  - [TODO-report.md](report/TODO-report.md): outstanding edits and review notes
   - [gaza.bib](report/gaza.bib): bib file for referencing
 - [outputs/figures/](outputs/): figures at print size, written by the qmds (ignored)
 - [attic/](attic/)
   - [protocol.docx](attic/protocol.docx): study protocol
   - [fc-draft-2025.qmd](attic/fc-draft-2025.qmd): previous draft write-up
-  - [fc-gaza-report-2026-09/](attic/fc-gaza-report-2026-09/): superseded Bayesian analysis and earlier results report
+  - [fc-gaza-report-2026-09/](attic/fc-gaza-report-2026-09/): restructure plan, old `visualise.R` and spare text
   - [ncdrisc-standardisation-2026-10/](attic/ncdrisc-standardisation-2026-10/): superseded standardisation of underweight to NCD-RisC reference BMI
