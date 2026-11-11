@@ -5,9 +5,7 @@ bibliography: gaza.bib
 csl: bmj.csl
 crossref:
   fig-title: "Figure S"
-  tbl-title: "Table S"
   fig-prefix: "Figure S"
-  tbl-prefix: "Table S"
   title-delim: "."
 format:
   html:
@@ -16,9 +14,7 @@ format:
     embed-resources: true
   docx:
     toc: false
-    filters:
-      - path: docx-cell-paragraph.lua
-        at: post-render
+    reference-doc: reference.docx
 execute:
   echo: false
   warning: false
@@ -66,17 +62,23 @@ Participants enrolled in two cohorts, August-September and October-November 2025
 
 We compared enrolment characteristics by cohort and by whether participants returned for follow-up.
 
+::: {custom-style="Table Caption"}
+Table S1. Enrolment characteristics by enrolment cohort.
+:::
+
 ```{r}
-#| label: tbl-balance-cohort
-#| tbl-cap: "Enrolment characteristics by enrolment cohort."
+#| label: tab-balance-cohort
 
 tbl_balance_cohort |>
   as_ft()
 ```
 
+::: {custom-style="Table Caption"}
+Table S2. Enrolment characteristics by whether the participant contributed any follow-up measurement.
+:::
+
 ```{r}
-#| label: tbl-balance-followup
-#| tbl-cap: "Enrolment characteristics by whether the participant contributed any follow-up measurement."
+#| label: tab-balance-followup
 
 tbl_balance_followup |>
   as_ft()
@@ -84,9 +86,12 @@ tbl_balance_followup |>
 
 We modelled the odds of contributing any follow-up measurement by participant characteristic (age, sex, residence, dependent children, role, BMI at enrolment and enrolment cohort) with logistic regression.
 
+::: {custom-style="Table Caption"}
+Table S3. Odds of contributing at least one follow-up measurement, by participant characteristic at enrolment.
+:::
+
 ```{r}
-#| label: tbl-return
-#| tbl-cap: "Odds of contributing at least one follow-up measurement, by participant characteristic at enrolment."
+#| label: tab-return
 
 fit_return |>
   tbl_regression(exponentiate = TRUE, label = labels_for(return_vars)) |>
@@ -102,17 +107,23 @@ Participants in the October-November cohort had much lower odds of returning (0.
 
 ### Change over conflict period
 
+::: {custom-style="Table Caption"}
+Table S4. Mean change from self-recalled pre-war (October 2023) weight to the first measured weight at enrolment.
+:::
+
 ```{r}
-#| label: tbl-headline
-#| tbl-cap: "Mean change from self-recalled pre-war (October 2023) weight to the first measured weight at enrolment."
+#| label: tab-headline
 
 tbl_change |>
   as_ft()
 ```
 
+::: {custom-style="Table Caption"}
+Table S5. Mean (95% CI) weight lost from pre-war to enrolment by pre-war BMI category, in kilograms and as a percentage of pre-war weight, with the number underweight (BMI < 18.5 kg/m2) at enrolment.
+:::
+
 ```{r}
-#| label: tbl-loss-by-bmi
-#| tbl-cap: "Mean (95% CI) weight lost from pre-war to enrolment by pre-war BMI category, in kilograms and as a percentage of pre-war weight, with the number underweight (BMI < 18.5 kg/m2) at enrolment."
+#| label: tab-loss-by-bmi
 
 tbl_loss_by_bmi |>
   as_ft()
@@ -144,9 +155,12 @@ save_fig(bmi_pyramid_plot, "figS1-bmi-pyramid", width = 8, height = 4.5)
 
 Chronic condition was recorded for only 144 participants, almost all enrolling from late October, so we did not include it in the main adjusted model and analysed it separately among the participants asked.
 
+::: {custom-style="Table Caption"}
+Table S6. Difference in weight change since pre-war for participants reporting a chronic condition, adjusted, among those who were asked.
+:::
+
 ```{r}
-#| label: tbl-chronic
-#| tbl-cap: "Difference in weight change since pre-war for participants reporting a chronic condition, adjusted, among those who were asked."
+#| label: tab-chronic
 
 tbl_chronic |>
   as_ft()
@@ -154,16 +168,18 @@ tbl_chronic |>
 
 ### Weight change during follow-up
 
+::: {custom-style="Table Caption"}
+Table S7. Sensitivity of the fitted change in weight over follow-up to model specification and participant selection.
+Change: fitted weight on the last day of follow-up minus the first day, percentage points of pre-war weight (delta-method 95% CI).
+Main model: smooth of calendar day, linear term for day of enrolment, participant random intercept.
+Each other row changes one element, except the last; with participant as a fixed effect, change is averaged over participants.
+Adjusted rows: participants with missing sex, age or residence are dropped.
+All participants: includes those measured only once, who inform the change only by comparison between participants enrolled at different times.
+EDF: effective degrees of freedom of the calendar-day smooth (1 = linear).
+:::
+
 ```{r}
-#| label: tbl-followup-sensitivity
-#| tbl-cap: >-
-#|   Sensitivity of the fitted change in weight over follow-up to model specification and participant selection.
-#|   Change: fitted weight on the last day of follow-up minus the first day, percentage points of pre-war weight (delta-method 95% CI).
-#|   Main model: smooth of calendar day, linear term for day of enrolment, participant random intercept.
-#|   Each other row changes one element, except the last; with participant as a fixed effect, change is averaged over participants.
-#|   Adjusted rows: participants with missing sex, age or residence are dropped.
-#|   All participants: includes those measured only once, who inform the change only by comparison between participants enrolled at different times.
-#|   EDF: effective degrees of freedom of the calendar-day smooth (1 = linear).
+#| label: tab-followup-sensitivity
 
 followup_sensitivity |>
   transmute(
@@ -201,11 +217,13 @@ gam.check(fit_gam)
 We compared the pre-war BMI of participants aged 40-59 (the age bands with 10 or more participants) with an independent 2020 survey of a representative sample of the Gaza Strip population in this age group [@abuhamadHypertensionCascadeCare2022].
 Participants shared a similar weight distribution; however, mean BMI was lower among women in our sample compared to the representative survey (by 2.1-2.5 kg/m^2^), and higher among men (by 1.5-2.1 kg/m^2^; Table S8).
 
+::: {custom-style="Table Caption"}
+Table S8. Pre-war BMI in this study compared with a 2020 cross-sectional survey of adults aged 40 and over, by age band and sex.
+Men aged 60-69 (n = 2) are shown but not included in the comparison in the text.
+:::
+
 ```{r}
-#| label: tbl-external
-#| tbl-cap: >-
-#|   Pre-war BMI in this study compared with a 2020 cross-sectional survey of adults aged 40 and over, by age band and sex.
-#|   Men aged 60-69 (n = 2) are shown but not included in the comparison in the text.
+#| label: tab-external
 
 external_comparison |>
   transmute(
@@ -233,13 +251,15 @@ Estimates for Palestine include the West Bank.
 Among women, we observed similar prevalence of underweight (1.3% in our sample, against 1.4% in the modelled estimate), and lower prevalence of obese BMI (38% and 45% respectively).
 Among men, our sample had lower prevalence of underweight (0%, against 2%), but higher prevalence of obese BMI (37%, against 29%), compared to the modelled estimate.
 
+::: {custom-style="Table Caption"}
+Table S9. Underweight (BMI < 18.5 kg/m2) and obesity (BMI of 30 kg/m2 or more) from recalled pre-war weight, compared with NCD-RisC modelled prevalence for 2022.
+Palestine: by sex and 5-year age group, weighted to participants' ages; includes the West Bank.
+World: by sex, age-standardised.
+Both sexes are weighted to participants' sex mix.
+:::
+
 ```{r}
-#| label: tbl-prewar-reference
-#| tbl-cap: >-
-#|   Underweight (BMI < 18.5 kg/m2) and obesity (BMI of 30 kg/m2 or more) from recalled pre-war weight, compared with NCD-RisC modelled prevalence for 2022.
-#|   Palestine: by sex and 5-year age group, weighted to participants' ages; includes the West Bank.
-#|   World: by sex, age-standardised.
-#|   Both sexes are weighted to participants' sex mix.
+#| label: tab-prewar-reference
 
 prewar_reference |>
   mutate(sex = factor(sex, levels = c(sex_levels, "Both"))) |>
@@ -263,15 +283,21 @@ prewar_reference |>
 
 We compared weight change in this study with other studies of adults in the Gaza Strip since October 2023 that reported weight before and during the war [@alnabihFoodInsecurityWeight2024; @farisCatastrophicFamineGaza2025].
 
-```{r}
-#| label: tbl-literature
-#| tbl-cap: >-
-#|   Studies of weight change among adults in the Gaza Strip since October 2023.
-#|   Weights and BMI are sample means.
-#|   Loss is the difference between mean pre-war and mean current weight, as a percentage of mean pre-war weight, for comparability with the published studies; the mean of individual percentage changes in this study is reported in the manuscript.
-#|   Alnabih et al.: no height recorded, so no BMI.
+::: {custom-style="Table Caption"}
+Table S10. Studies of weight change among adults in the Gaza Strip since October 2023.
+Weights and BMI are sample means.
+Loss is the difference between mean pre-war and mean current weight, as a percentage of mean pre-war weight, for comparability with the published studies; the mean of individual percentage changes in this study is reported in the manuscript.
+Alnabih et al.: no height recorded, so no BMI.
+:::
 
+```{r}
+#| label: tab-literature
+
+# One column per study, one row per measure
 literature_comparison |>
+  mutate(across(everything(), as.character)) |>
+  pivot_longer(-Study, names_to = " ") |>
+  pivot_wider(names_from = Study) |>
   ft()
 ```
 
@@ -319,7 +345,7 @@ Follow-up form:
 We report this study following the STROBE guideline for cohort studies [@vonelmStrengtheningReportingObservational2007].
 
 | Item | No. | Recommendation | Where reported |
-|------------|----|------------------------------------|------------------------------------|
+|------------------|--------|----------------------------------|----------------------------------|
 | Title and abstract | 1a | Indicate the design with a commonly used term | Abstract, Methods ("cohort study") |
 | | 1b | Informative and balanced summary | Abstract |
 | Background, rationale | 2 | Scientific background and rationale | Introduction |
@@ -355,4 +381,4 @@ We report this study following the STROBE guideline for cohort studies [@vonelmS
 | Generalisability | 21 | External validity | Discussion (employment, sex differences) |
 | Funding | 22 | Source of funding and role of funders | Funding |
 
-: STROBE checklist for cohort studies, with the location of each item in the manuscript and supplement. {#tbl-strobe}
+: Table S11. STROBE checklist for cohort studies, with the location of each item in the manuscript and supplement.

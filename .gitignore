@@ -6,6 +6,8 @@
 # except the rendered manuscript and supplement (aggregate results only)
 !report/manuscript.docx
 !report/supplement.docx
+# and the Word template the qmds render with
+!report/reference.docx
 # except the aggregate 2020 survey table that R/context.R reads
 !data/raw/gaza_survey2020_kcal_bmi_agg.csv
 # and the public NCD-RisC reference BMI extract it reads

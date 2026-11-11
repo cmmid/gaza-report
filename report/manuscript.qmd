@@ -9,9 +9,7 @@ format:
     embed-resources: true
   docx:
     toc: false
-    filters:
-      - path: docx-cell-paragraph.lua
-        at: post-render
+    reference-doc: reference.docx
 execute:
   echo: false
   warning: false
@@ -280,18 +278,20 @@ ppt_plot <- flow_plot + timeline_plot + plot_layout(widths = c(1, 1.15))
 save_fig(ppt_plot, "fig1-ppt", width = 9, height = 6.5)
 ```
 
-Participants enrolled in two cohorts following advertised recruitment, with 258 (59%) in August-September 2025, and 176 (41%) in October-November (@tbl-characteristics; Supplement Table S1).
+Participants enrolled in two cohorts following advertised recruitment, with 258 (59%) in August-September 2025, and 176 (41%) in October-November (Table 1; Supplement Table S1).
 Almost all participants (97%) were recruited by UNRWA.
 Half of participants were aged 30-45, and 55% were female.
 The two cohorts were similar in age, sex, number of children, and pre-war BMI.
 Residents of Gaza City and North Gaza made up 47% of the first cohort and only 13% of the second (Table S1), in line with the depopulation of these areas over the study period.
 
+::: {custom-style="Table Caption"}
+Table 1. Characteristics of humanitarian staff who provided at least one weight measurement, with mean weight loss and crude and adjusted difference in weight change since pre-war.
+Mean weight loss and differences shown as percentages of pre-war weight with 95% confidence intervals.
+Adjusted estimates from linear regression, adjusting for all characteristics as shown except chronic condition (reported in Table S6).
+:::
+
 ```{r}
-#| label: tbl-characteristics
-#| tbl-cap: >-
-#|   Characteristics of humanitarian staff who provided at least one weight measurement, with mean weight loss and crude and adjusted difference in weight change since pre-war.
-#|   Mean weight loss and differences shown as percentages of pre-war weight with 95% confidence intervals.
-#|   Adjusted estimates from linear regression, adjusting for all characteristics as shown except chronic condition (reported in Table S6).
+#| label: tab-characteristics
 
 tbl_table1 |>
   remove_footnote_header() |>
@@ -402,7 +402,7 @@ We observed greater weight loss among those with previously higher weight.
 Before the war, 72% of participants were classified as overweight or obese (Figure S1), seeing a subsequent mean loss of 17.4% of previous weight (15.6 kg).
 Those with a normal range BMI saw a mean 11.0% loss (7.2 kg; Table S5).
 
-We assessed potential risk factors for weight loss among participant characteristics (@tbl-characteristics; @fig-risk-factors).
+We assessed potential risk factors for weight loss among participant characteristics (Table 1; @fig-risk-factors).
 After adjustment, we observed greater weight loss with increasing age (-4.9% (-8.0 to -1.6) among those over 45, -3.3% (-6.3 to -0.2) among ages 30-45, compared to participants under 30); and among men (-3.3% (-5.2 to -1.4), compared to women).
 Adjusted weight change also varied by governorate, with greatest weight loss among residents of Gaza City or North Gaza (-4.6% (-7.1 to -1.9) compared to those resident in Deir Al Balah).
 Associations with the number of dependent children, and with professional role, weakened after adjustment, and we noted only imprecise evidence for an association with chronic conditions among those asked (-3.1% (-7.4 to 1.4), n = 139; Table S6).
@@ -410,7 +410,7 @@ Associations with the number of dependent children, and with professional role, 
 ```{r}
 #| label: fig-risk-factors
 #| fig-cap: >-
-#|   Adjusted difference in weight relative to pre-war, by participant characteristic, compared with the reference level (open points), from the adjusted model in @tbl-characteristics.
+#|   Adjusted difference in weight relative to pre-war, by participant characteristic, compared with the reference level (open points), from the adjusted model in Table 1.
 #|   Lines: 95% confidence intervals.
 #|   Vertical line indicates no difference.
 #| fig-width: 7

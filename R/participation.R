@@ -46,7 +46,7 @@ followup_median_weight <- followup_weights |>
   summarise(median = median(weight)) |>
   tibble::deframe()
 
-## Representativeness within the sample (tbl-balance-cohort, tbl-balance-followup) ----
+## Representativeness within the sample (tab-balance-cohort, tab-balance-followup) ----
 # Enrolment characteristics by group, for selection checks
 balance_vars <- c(
   "age",
@@ -87,7 +87,7 @@ tbl_balance_followup <- baseline |>
   ) |>
   balance_table("followup")
 
-## Return for follow-up (tbl-return) ----
+## Return for follow-up (tab-return) ----
 # Odds of contributing any follow-up measurement
 return_vars <- c(
   "age",

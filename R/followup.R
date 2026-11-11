@@ -2,7 +2,7 @@
 # Weight change during follow-up, August-December 2025, among participants
 # with two or more measurements.
 # Manuscript: Results "Weight change over the study period", Figure 2B
-# Supplement: "Weight change during follow-up" (tbl-followup-sensitivity,
+# Supplement: "Weight change during follow-up" (tab-followup-sensitivity,
 #   fig-followup-diagnostics)
 # Sourced after R/utils.R and R/data.R.
 # =============================================================================
@@ -114,7 +114,7 @@ gam_change <- fitted_change(fit_gam)
 
 # Supplementary analysis ------------------------------------------------------
 
-## Sensitivity of the fitted change (tbl-followup-sensitivity) ----
+## Sensitivity of the fitted change (tab-followup-sensitivity) ----
 # The later cohort contributes few, short follow-ups: check the change does not
 # rest on the enrolment-day term or on comparisons between participants
 longitudinal_30d <- longitudinal |>

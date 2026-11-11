@@ -61,7 +61,7 @@ tbl_assoc <- function(fit, include = everything()) {
 
 # Analysis --------------------------------------------------------------------
 
-## Change from pre-war to enrolment (tbl-headline) ----
+## Change from pre-war to enrolment (tab-headline) ----
 # Mean change with t-based 95% CI, overall and by cohort
 tbl_change <- baseline |>
   select(entry_cohort, pct_weight_change, bmi_change) |>
@@ -96,7 +96,7 @@ underweight_rr <- table(
   unclass() |>
   Wald_CI_ratio_paired_2x2()
 
-## Characteristics of weight loss since pre-war (tbl-characteristics) ----
+## Characteristics of weight loss since pre-war (tab-characteristics) ----
 # A constant `overall` variable gives the table a top row for all participants
 table1_data <- loss_set |>
   mutate(overall = "Overall") |>
@@ -155,7 +155,7 @@ tbl_table1 <- tbl_merge(
     estimate_4 = "**Adjusted % difference (95% CI)**"
   )
 
-## Chronic condition (tbl-chronic) ----
+## Chronic condition (tab-chronic) ----
 # Asked of a subset only, so it is adjusted separately, within those asked.
 # All of them were UNRWA staff, so organisation drops out.
 tbl_chronic <- tbl_assoc(
@@ -172,7 +172,7 @@ tbl_chronic <- tbl_assoc(
 
 # Supplementary analysis ------------------------------------------------------
 
-## Weight loss by pre-war BMI (tbl-loss-by-bmi) ----
+## Weight loss by pre-war BMI (tab-loss-by-bmi) ----
 tbl_loss_by_bmi <- loss_set |>
   select(bmi_category_prewar, kg_lost, pct_lost, underweight_entry) |>
   tbl_summary(

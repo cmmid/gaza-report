@@ -2,8 +2,8 @@
 # Comparison with reference populations: recalled pre-war BMI against
 # independent estimates, and published studies of adult weight change.
 # Manuscript: Discussion
-# Supplement: "Population comparisons" (tbl-external, tbl-prewar-reference,
-#   tbl-literature)
+# Supplement: "Population comparisons" (tab-external, tab-prewar-reference,
+#   tab-literature)
 # Sourced after R/utils.R and R/data.R.
 # =============================================================================
 
@@ -50,7 +50,7 @@ survey_2020 <- read_csv(
 
 # Analysis --------------------------------------------------------------------
 
-## Recalled pre-war BMI against NCD-RisC estimates (tbl-prewar-reference) ----
+## Recalled pre-war BMI against NCD-RisC estimates (tab-prewar-reference) ----
 # Recall and selection check: underweight and obesity from recalled pre-war
 # weight, against Palestine weighted to participants' ages by
 # sex and for both sexes at participants' sex mix
@@ -95,7 +95,7 @@ prewar_reference <- bind_rows(
   ) |>
   relocate(n, .after = sex)
 
-## Recalled pre-war BMI against the 2020 survey (tbl-external) ----
+## Recalled pre-war BMI against the 2020 survey (tab-external) ----
 external_comparison <- baseline |>
   filter(age_years >= 40) |>
   mutate(
@@ -116,7 +116,7 @@ external_comparison <- baseline |>
   mutate(age_band = as.character(age_band), sex = as.character(sex)) |>
   left_join(survey_2020, by = c("age_band", "sex"))
 
-## Published studies of adult weight change (tbl-literature) ----
+## Published studies of adult weight change (tab-literature) ----
 literature_weight <- tribble(
   ~Study, ~Period, ~Population, ~n, ~`Women, %`, ~Age, ~`Pre-war weight`, ~`Current weight`, ~`Mean weight, kg`, ~`Mean BMI, kg/m2`, ~`Underweight now, %`,
   "Alnabih et al. 2024", "April 2024", "Residents of North Gaza and Gaza City, recruited in shelters and markets (convenience)", "497", "33.6", "13-83 years", "Self-reported", "Measured by study team", "84.9 to 66.2", "-", "-",

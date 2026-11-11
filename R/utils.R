@@ -28,17 +28,42 @@ theme_gtsummary_compact()
 set_gtsummary_theme(list("pkgwide-str:ci.sep" = " to "))
 
 # Tables and text -------------------------------------------------------------
-ft <- function(x) {
-  flextable(x) |>
-    set_table_properties(layout = "autofit", width = 1) |>
-    theme_booktabs()
+# Text width of report/reference.docx: A4 less 2 cm margins, in inches
+page_width <- (21 - 2 * 2) / 2.54
+
+# Fixed column widths that fill the page. Each column keeps its natural,
+# unwrapped width, and only the widest columns are narrowed, to a common cap,
+# until the table fits. Left to itself, Word squeezes short columns instead.
+# paginate() keeps a table on one page where it fits.
+fit_page <- function(x, width = page_width) {
+  w <- dim_pretty(x)$widths
+  if (sum(w) > width) {
+    cap <- uniroot(\(cap) sum(pmin(w, cap)) - width, c(0, max(w)))$root
+    w <- pmin(w, cap)
+  }
+  x |>
+    width(width = w * width / sum(w)) |>
+    set_table_properties(layout = "fixed") |>
+    paginate(init = TRUE, hdr_ftr = TRUE)
 }
 
-# gtsummary table as a page-width flextable. Without the width, flextable leaves
-# Word to size the table, and it collapses inside Quarto's caption cell.
+# Tables have no Quarto tbl- label: Quarto nests a labelled table inside a
+# caption table, which breaks the docx. Each caption is instead typed, with its
+# number, in a "Table Caption" paragraph above the chunk; that style in
+# report/reference.docx keeps the caption on the page with its table.
+ft <- function(x) {
+  flextable(x) |>
+    theme_booktabs() |>
+    fit_page()
+}
+
+# gtsummary tables, with the same font size and row height as ft()
 as_ft <- function(x) {
   as_flex_table(x) |>
-    set_table_properties(layout = "autofit", width = 1)
+    fontsize(size = 9, part = "all") |>
+    padding(padding.top = 3, padding.bottom = 3, part = "all") |>
+    height_all(height = 0.25) |>
+    fit_page()
 }
 
 fmt_ci <- function(estimate, low, high, digits = 1) {
