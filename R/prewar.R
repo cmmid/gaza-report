@@ -20,13 +20,8 @@ exposures <- c(
   "entry_cohort"
 )
 
-# Reference level = first level of each characteristic (age under 30), except
-# governorate, where the reference is the most populated stratum.
-governorate_ref <- "Khan Yunis, Rafah"
-model_data <- baseline |>
-  mutate(
-    governorate_cat = relevel(governorate_cat, ref = governorate_ref)
-  )
+# Reference level = first level of each characteristic (age under 30,
+# Deir Al Balah)
 
 # Participants with a pre-war BMI category and a measured weight at enrolment
 loss_set <- baseline |>
@@ -106,7 +101,7 @@ underweight_rr <- table(
 
 ## Characteristics of weight loss since pre-war (tbl-characteristics) ----
 # A constant `overall` variable gives the table a top row for all participants
-table1_data <- model_data |>
+table1_data <- baseline |>
   mutate(overall = "Overall", pct_lost = -pct_weight_change) |>
   select(overall, pct_lost, all_of(characteristic_order))
 table1_labels <- c(list(overall = "Overall"), labels_for(characteristic_order))
@@ -133,7 +128,7 @@ tbl_mean_loss <- table1_data |>
   ) |>
   modify_header(stat_0 = "**Mean % weight loss**")
 
-tbl_crude <- model_data |>
+tbl_crude <- baseline |>
   select(log_weight_ratio, all_of(characteristic_order)) |>
   tbl_uvregression(
     method = lm,
@@ -148,7 +143,7 @@ tbl_crude <- model_data |>
 
 fit_adjusted <- lm(
   reformulate(exposures, response = "log_weight_ratio"),
-  data = model_data
+  data = baseline
 )
 tbl_adjusted <- tbl_assoc(fit_adjusted)
 
@@ -172,7 +167,7 @@ tbl_chronic <- tbl_assoc(
       c(setdiff(exposures, "organisation"), "chronic"),
       response = "log_weight_ratio"
     ),
-    data = filter(model_data, !is.na(chronic))
+    data = filter(baseline, !is.na(chronic))
   ),
   include = chronic
 ) |>

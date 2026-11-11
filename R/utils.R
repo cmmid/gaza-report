@@ -34,6 +34,13 @@ ft <- function(x) {
     theme_booktabs()
 }
 
+# gtsummary table as a page-width flextable. Without the width, flextable leaves
+# Word to size the table, and it collapses inside Quarto's caption cell.
+as_ft <- function(x) {
+  as_flex_table(x) |>
+    set_table_properties(layout = "autofit", width = 1)
+}
+
 fmt_ci <- function(estimate, low, high, digits = 1) {
   sprintf(
     paste0("%.", digits, "f (%.", digits, "f to %.", digits, "f)"),

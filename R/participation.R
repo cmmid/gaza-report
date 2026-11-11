@@ -165,12 +165,10 @@ weekly_measurements <- bind_rows(
   count(week, type)
 
 system_events <- tibble(
-  date = c(advert_dates, dashboard_dates, famine_date, ceasefire_date),
+  date = c(advert_dates, ceasefire_date),
   label = c(
     "Advertised",
     "Re-advertised",
-    "Dashboard live",
-    "Famine confirmed",
     "Ceasefire"
   )
 )
@@ -212,16 +210,12 @@ flow_text <- list(
     sprintf("- Missing or implausible value: %d", n_excluded_values)
   ),
   enrolled = sprintf(
-    paste0(
-      "Enrolled: %d participants, %d valid measurements\n",
-      "Sex, age, governorate, role, dependent children,\n",
-      "height, recalled pre-war weight, measured weight"
-    ),
+    "Enrolled: %d participants\n%d valid measurements",
     nrow(baseline),
     nrow(included)
   ),
   cross_sectional = sprintf(
-    "Change since pre-war\n%d participants\nRecalled pre-war and enrolment weight",
+    "Change since pre-war\n%d participants",
     nrow(baseline)
   ),
   returned = sprintf(
@@ -230,7 +224,7 @@ flow_text <- list(
     100 * n_followup / nrow(baseline)
   ),
   implausible = sprintf(
-    "Excluded: %d participants\n(%d measurements)\nBMI change > 1 kg/m2 per day",
+    "Excluded: %d participants\n(%d measurements)\nBMI change\n> 1 kg/m2 per day",
     length(implausible_ids),
     sum(longitudinal_all$id %in% implausible_ids)
   ),

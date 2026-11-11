@@ -11,28 +11,31 @@ pacman::p_load(mgcv, marginaleffects)
 
 ## Figure helpers ----
 # Individual weight trajectories against calendar time; points filled by BMI
-# category at enrolment, as in fig-outcomes A
+# category at enrolment, as in fig-outcomes A, shaped by enrolment/follow-up
 plot_trajectories <- function(data, subtitle) {
   data <- mutate(
     data,
-    bmi_category_entry = factor(bmi_category_entry, levels = bmi_levels)
+    bmi_category_entry = factor(bmi_category_entry, levels = bmi_levels),
+    visit = if_else(is_first, "Enrolment", "Follow-up")
   )
   ggplot(data, aes(x = record_date, y = pct_weight_change)) +
     geom_hline(yintercept = 0, linetype = 1, colour = "grey30") +
     geom_line(aes(group = id), colour = "grey60", alpha = 0.4) +
     geom_point(
-      aes(fill = bmi_category_entry, shape = bmi_category_entry,
-          size = is_first),
+      aes(fill = bmi_category_entry, shape = visit),
       colour = "grey20",
       stroke = 0.2,
-      alpha = 0.85
+      alpha = 0.85,
+      size = 1.5
     ) +
-    scale_bmi_category() +
-    scale_size_manual(values = c(`FALSE` = 1.1, `TRUE` = 1.9), guide = "none") +
+    scale_fill_manual(
+      values = bmi_colours(), name = "BMI at enrolment", drop = FALSE
+    ) +
+    scale_shape_manual(values = c(Enrolment = 21, `Follow-up` = 24), name = NULL) +
     geom_vline(xintercept = ceasefire_date, linetype = 2, colour = "grey70") +
     labs(
       x = "Date of measurement, 2025",
-      y = "Weight relative to pre-war (%)",
+      y = "Weight change relative to 2023 (%)",
       subtitle = subtitle
     )
 }
@@ -128,6 +131,18 @@ gam_fit_spanning <- predict_gam(fit_gam_spanning)
 longitudinal_30d <- longitudinal |>
   filter(max(record_date) - min(record_date) >= 30, .by = id)
 
+# All participants, including those measured once. Without the enrolment-day
+# term the change is also compared between participants enrolled at different
+# times, so adjust for characteristics that differ by cohort.
+followup_all_participants <- included |>
+  filter(!id %in% implausible_ids) |>
+  mutate(
+    id = factor(id),
+    log_weight_ratio = log(weight / weight_prewar),
+    calendar_day = as.numeric(record_date - study_start),
+    has_followup = n_obs >= 2
+  )
+
 followup_sensitivity <- tribble(
   ~model, ~fit,
   "Main model", fit_gam,
@@ -136,7 +151,13 @@ followup_sensitivity <- tribble(
   "Participant as a fixed effect (change within participants only)",
   fit_followup_gam(longitudinal, log_weight_ratio ~ s(calendar_day, k = 4) + id),
   "Participants measured before and after the ceasefire", fit_gam_spanning,
-  "Participants measured over 30 days or more", fit_followup_gam(longitudinal_30d)
+  "Participants measured over 30 days or more", fit_followup_gam(longitudinal_30d),
+  "Adjusted for sex, age and residence",
+  fit_followup_gam(longitudinal, log_weight_ratio ~ s(calendar_day, k = 4) + entry_day +
+    sex + age + governorate_cat + s(id, bs = "re")),
+  "All participants, no term for day of enrolment, adjusted for sex, age, residence and any follow-up",
+  fit_followup_gam(followup_all_participants, log_weight_ratio ~ s(calendar_day, k = 4) +
+    sex + age + governorate_cat + has_followup + s(id, bs = "re"))
 ) |>
   mutate(
     participants = map_int(fit, \(f) n_distinct(f$model$id)),
