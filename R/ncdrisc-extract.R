@@ -1,6 +1,5 @@
 # =============================================================================
-# Extract reference BMI prevalences and population structure for
-# R/context.R
+# Extract reference BMI prevalences for R/context.R
 # =============================================================================
 # BMI. NCD Risk Factor Collaboration, Nature 2026, adult BMI by sex. Downloaded
 # from https://www.ncdrisc.org/data-downloads-adiposity.html into data/context/:
@@ -12,20 +11,12 @@
 # for the world, age-standardised. Point estimates of the BMI band prevalences
 # only. Writes data/raw/ncdrisc_2026_bmi_age_sex_2022.csv.
 #
-# Population. US Census Bureau International Database, December 2025 release,
-# population by single year of age and sex. Downloaded 2026-10-13 from
-# https://www.census.gov/data-tools/demo/data/idb/dataset/idbzip.zip into
-# data/context/:
-#   IDB_2025-12_idbzip.zip
-#
-# Keeps the Gaza Strip, mid-2025, ages 18 and over. Projected from the 2017
-# census: not adjusted for deaths or displacement during the war. Writes
-# data/raw/idb2025_gaza_pop_age_sex_2025.csv.
+# The population extract for the dropped standardisation to adults in the Gaza
+# Strip is in attic/gaza-standardisation-2026-11/idb-extract.R.
 
 pacman::p_load(here, readr, dplyr)
 
 reference_year <- 2022
-population_year <- 2025
 
 # -----------------------------------------------------------------------------
 # NCD-RisC BMI band prevalences
@@ -78,41 +69,3 @@ stopifnot(
 )
 
 write_csv(extract, here("data", "raw", "ncdrisc_2026_bmi_age_sex_2022.csv"))
-
-# -----------------------------------------------------------------------------
-# Population of the Gaza Strip by sex and single year of age
-# -----------------------------------------------------------------------------
-
-# Pipe-delimited; the header row starts with "#". GEO_ID ends in the GENC code
-# (XG = Gaza Strip). SEX: 0 = both, 1 = male, 2 = female.
-idb <- read_delim(
-  unz(here("data", "context", "IDB_2025-12_idbzip.zip"), "idbsingleyear.txt"),
-  delim = "|",
-  show_col_types = FALSE
-)
-names(idb)[1] <- "YR"
-
-population <- idb |>
-  filter(
-    YR == population_year,
-    GEO_ID == "W140000WOXG",
-    SEX %in% 1:2,
-    AGE >= 18
-  ) |>
-  transmute(
-    year = YR,
-    sex = if_else(SEX == 1, "Male", "Female"),
-    age_years = AGE,
-    population = POP
-  ) |>
-  arrange(sex, age_years)
-
-stopifnot(
-  nrow(population) == 2 * length(18:100),
-  !anyNA(population$population)
-)
-
-write_csv(
-  population,
-  here("data", "raw", "idb2025_gaza_pop_age_sex_2025.csv")
-)

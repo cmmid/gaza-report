@@ -1,8 +1,9 @@
 # =============================================================================
 # Weight change during follow-up, August-December 2025, among participants
 # with two or more measurements.
-# Manuscript: Results "Weight change during follow-up", Figure 2B
-# Supplement: "Weight change during follow-up"
+# Manuscript: Results "Weight change over the study period", Figure 2B
+# Supplement: "Weight change during follow-up" (tbl-followup-sensitivity,
+#   fig-followup-diagnostics)
 # Sourced after R/utils.R and R/data.R.
 # =============================================================================
 
@@ -111,18 +112,6 @@ fitted_change <- function(fit) {
 
 gam_change <- fitted_change(fit_gam)
 
-# Spread of participants around the population trajectory: SD of the random
-# intercept (variance = scale / smoothing parameter) and of the residual, on
-# the log scale
-sd_participant <- sqrt(fit_gam$sig2 / fit_gam$sp[["s(id)"]])
-sd_residual <- sqrt(fit_gam$sig2)
-
-## Participants measured either side of the ceasefire (fig-followup-spanning) ----
-longitudinal_spanning <- filter(longitudinal, spans_ceasefire)
-n_spanning <- n_distinct(longitudinal_spanning$id)
-fit_gam_spanning <- fit_followup_gam(longitudinal_spanning)
-gam_fit_spanning <- predict_gam(fit_gam_spanning)
-
 # Supplementary analysis ------------------------------------------------------
 
 ## Sensitivity of the fitted change (tbl-followup-sensitivity) ----
@@ -150,7 +139,8 @@ followup_sensitivity <- tribble(
   fit_followup_gam(longitudinal, log_weight_ratio ~ s(calendar_day, k = 4) + s(id, bs = "re")),
   "Participant as a fixed effect (change within participants only)",
   fit_followup_gam(longitudinal, log_weight_ratio ~ s(calendar_day, k = 4) + id),
-  "Participants measured before and after the ceasefire", fit_gam_spanning,
+  "Participants measured before and after the ceasefire",
+  fit_followup_gam(filter(longitudinal, spans_ceasefire)),
   "Participants measured over 30 days or more", fit_followup_gam(longitudinal_30d),
   "Adjusted for sex, age and residence",
   fit_followup_gam(longitudinal, log_weight_ratio ~ s(calendar_day, k = 4) + entry_day +
@@ -169,39 +159,12 @@ followup_sensitivity <- tribble(
   select(-fit)
 
 # Numbers in the text ---------------------------------------------------------
-# "estimate% (low to high)" for one row of a fitted follow-up trajectory
-fit_ci <- function(fit, row) {
-  paste0(
-    sprintf("%.1f%%", fit$estimate[row]),
-    sprintf(" (%.1f to %.1f)", fit$conf.low[row], fit$conf.high[row])
-  )
-}
-
 numbers_followup <- tribble(
   ~location, ~quantity, ~value,
   "Abstract; Results, follow-up", "Fitted change over follow-up, percentage points (95% CI)",
   fmt_ci(gam_change$estimate, gam_change$conf.low, gam_change$conf.high),
   "Results, follow-up", "Effective degrees of freedom of the calendar-day smooth (1 = linear)",
   sprintf("%.2f", summary(fit_gam)$edf[1]),
-  "Results, follow-up", "Fitted weight, first day of follow-up",
-  paste(format(first(gam_fit_all$record_date), "%e %B"), fit_ci(gam_fit_all, 1)),
-  "Results, follow-up", "Fitted weight, last day of follow-up",
-  paste(format(last(gam_fit_all$record_date), "%e %B"),
-        fit_ci(gam_fit_all, nrow(gam_fit_all))),
-  "Results, follow-up", "SD of participant levels; residual SD (log ratio x 100)",
-  sprintf("%.1f; %.1f", 100 * sd_participant, 100 * sd_residual),
-  "Results, follow-up", "Share of variance between participants",
-  fmt_pct(100 * sd_participant^2 / (sd_participant^2 + sd_residual^2), 0),
-  "Results, follow-up", "95% of participants' fitted weight, first day of follow-up",
-  with(gam_fit_all, paste(
-    fmt_pct(as_pct_difference(log1p(estimate[1] / 100) - 1.96 * sd_participant)), "to",
-    fmt_pct(as_pct_difference(log1p(estimate[1] / 100) + 1.96 * sd_participant))
-  )),
   "Results, follow-up", "Measurements; participants in the follow-up model",
-  paste(nrow(longitudinal), n_distinct(longitudinal$id), sep = "; "),
-  "Results, follow-up", "Participants measured before and after the ceasefire",
-  as.character(n_spanning),
-  "Results, follow-up", "Participants dropped for implausible BMI change; their measurements",
-  paste(length(implausible_ids), sum(longitudinal_all$id %in% implausible_ids),
-        sep = "; ")
+  paste(nrow(longitudinal), n_distinct(longitudinal$id), sep = "; ")
 )

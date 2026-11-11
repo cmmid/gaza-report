@@ -67,7 +67,7 @@ exclusions <- read_csv(
 
 # Valid measurements ----------------------------------------------------------
 included <- data_processed |>
-  filter(record_remove == "include", !is.na(weight)) |>
+  filter(record_remove == "include") |>
   mutate(
     record_date = as_date(record_date),
     date_entry = as_date(date_entry),

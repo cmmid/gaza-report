@@ -1,6 +1,6 @@
 # =============================================================================
-# Signals of famine: citizen science tracking of adult weight in
-# the Gaza Strip, 2025
+# Real-time signals of food insecurity: a co-designed cohort with
+# humanitarian staff in the Gaza Strip, 2025
 # =============================================================================
 
 # =============================================================================

@@ -23,9 +23,8 @@ exposures <- c(
 # Reference level = first level of each characteristic (age under 30,
 # Deir Al Balah)
 
-# Participants with a pre-war BMI category and a measured weight at enrolment
+# Weight lost since pre-war, in kg and as % of pre-war weight
 loss_set <- baseline |>
-  filter(!is.na(bmi_category_prewar), !is.na(weight_entry)) |>
   mutate(
     kg_lost = weight_prewar - weight_entry,
     pct_lost = -pct_weight_change,
@@ -90,19 +89,17 @@ mean_loss <- t.test(-baseline$pct_weight_change)
 # Relative risk: the same participants are counted twice, so the interval is
 # Wald for a ratio of paired proportions. Rows are enrolment, columns pre-war,
 # so the estimate is enrolment / pre-war.
-paired_underweight <- baseline |>
-  filter(!is.na(underweight_prewar), !is.na(underweight_entry))
 underweight_rr <- table(
-  entry = factor(paired_underweight$underweight_entry, levels = c(TRUE, FALSE)),
-  prewar = factor(paired_underweight$underweight_prewar, levels = c(TRUE, FALSE))
+  entry = factor(baseline$underweight_entry, levels = c(TRUE, FALSE)),
+  prewar = factor(baseline$underweight_prewar, levels = c(TRUE, FALSE))
 ) |>
   unclass() |>
   Wald_CI_ratio_paired_2x2()
 
 ## Characteristics of weight loss since pre-war (tbl-characteristics) ----
 # A constant `overall` variable gives the table a top row for all participants
-table1_data <- baseline |>
-  mutate(overall = "Overall", pct_lost = -pct_weight_change) |>
+table1_data <- loss_set |>
+  mutate(overall = "Overall") |>
   select(overall, pct_lost, all_of(characteristic_order))
 table1_labels <- c(list(overall = "Overall"), labels_for(characteristic_order))
 
@@ -242,44 +239,20 @@ bmi_category_long <- baseline |>
     bmi_category = factor(bmi_category, levels = bmi_levels)
   )
 
-## Mean, median and geometric mean (tbl-centre-comparison) ----
-centres_prewar <- bind_rows(
-  tibble(
-    location = "Abstract; Plain summary; Results, change over the conflict",
-    quantity = weight_label,
-    group = "All participants",
-    n = nrow(baseline),
-    centres = list(weight_centres(baseline))
-  ),
-  tibble(
-    location = "Results, change over the conflict",
-    quantity = "BMI change, kg/m2",
-    group = "All participants",
-    n = sum(!is.na(baseline$bmi_change)),
-    centres = list(centre_summary(baseline$bmi_change)),
-    digits = 2
-  ),
-  baseline |>
-    filter(!is.na(entry_cohort)) |>
-    group_by(group = paste(entry_cohort, "cohort")) |>
-    summarise(n = n(), centres = list(weight_centres(pick(everything())))) |>
-    mutate(location = "Results, change over the conflict", quantity = weight_label)
-)
-
 # Numbers in the text ---------------------------------------------------------
 numbers_prewar <- tribble(
   ~location, ~quantity, ~value,
   "Abstract; Results, change over the conflict", "Lost weight since pre-war",
   fmt_pct(100 * mean(baseline$pct_weight_change < 0), 1),
-  "Abstract; Plain summary", "Mean weight lost, % of pre-war (95% CI)",
+  "Abstract; Results, change over the conflict", "Mean weight lost, % of pre-war (95% CI)",
   sprintf("%.1f%% (%.1f to %.1f)", mean_loss$estimate,
           mean_loss$conf.int[1], mean_loss$conf.int[2]),
   "Results, change over the conflict", "Underweight pre-war; at enrolment",
   paste(
-    sprintf("%.1f%% (%d/%d)", 100 * mean(paired_underweight$underweight_prewar),
-            sum(paired_underweight$underweight_prewar), nrow(paired_underweight)),
-    sprintf("%.1f%% (%d/%d)", 100 * mean(paired_underweight$underweight_entry),
-            sum(paired_underweight$underweight_entry), nrow(paired_underweight)),
+    sprintf("%.1f%% (%d/%d)", 100 * mean(baseline$underweight_prewar),
+            sum(baseline$underweight_prewar), nrow(baseline)),
+    sprintf("%.1f%% (%d/%d)", 100 * mean(baseline$underweight_entry),
+            sum(baseline$underweight_entry), nrow(baseline)),
     sep = "; "
   ),
   "Results, change over the conflict", "Relative risk of underweight (95% CI)",

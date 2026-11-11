@@ -72,55 +72,6 @@ tidy_pct <- function(x, ...) {
     ))
 }
 
-# Mean, median and geometric mean (tbl-centre-comparison) ---------------------
-# Mean, median and geometric mean of a change, each with a 95% CI.
-# Mean: t-based, as in tbl_change. Median: exact order-statistic interval.
-# Geometric mean: t-based on the log ratio of weight to pre-war weight,
-# back-transformed to a percentage; only when `log_ratio` is given.
-centre_summary <- function(x, log_ratio = NULL) {
-  x <- sort(x[!is.na(x)])
-  n <- length(x)
-  k <- qbinom(0.025, n, 0.5)
-  mean_test <- t.test(x)
-  centres <- tibble(
-    statistic = c("mean", "median"),
-    estimate = c(unname(mean_test$estimate), median(x)),
-    low = c(mean_test$conf.int[1], x[k]),
-    high = c(mean_test$conf.int[2], x[n - k + 1])
-  )
-  if (is.null(log_ratio)) {
-    return(centres)
-  }
-  log_test <- t.test(log_ratio)
-  add_row(
-    centres,
-    statistic = "geometric_mean",
-    estimate = as_pct_difference(unname(log_test$estimate)),
-    low = as_pct_difference(log_test$conf.int[1]),
-    high = as_pct_difference(log_test$conf.int[2])
-  )
-}
-
-# Weight change relative to pre-war is a ratio: the geometric mean and the
-# median sit on the same scale as the log-ratio models, the arithmetic mean of
-# % change does not.
-weight_centres <- function(data) {
-  centre_summary(data$pct_weight_change, data$log_weight_ratio)
-}
-
-weight_label <- "Weight change, % of pre-war"
-
-# Rows of centres (location, quantity, group, n, centres, optional digits) to
-# one row per quantity with a "estimate (low to high)" column per statistic
-format_centres <- function(rows) {
-  rows |>
-    mutate(digits = coalesce(digits, 1)) |>
-    unnest(centres) |>
-    mutate(text = fmt_ci(estimate, low, high, digits)) |>
-    select(location, quantity, group, n, statistic, text) |>
-    pivot_wider(names_from = statistic, values_from = text, values_fill = "n/a")
-}
-
 # Figures ---------------------------------------------------------------------
 # BMI category at enrolment: viridis fill, as in fig-bmi-pyramid, and a
 # triangle for underweight so the category is not shown by colour alone

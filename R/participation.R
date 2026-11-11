@@ -1,7 +1,6 @@
 # =============================================================================
-# Participation and surveillance system description
-# Manuscript: Results "Participation", "Weight change during follow-up"
-#   (return), "Performance of the surveillance system"
+# Participation and selection checks
+# Manuscript: Results "Participation", "Sensitivity analysis"; Figure 1
 # Supplement: "Participation and data collection"
 # Source after R/utils.R and R/data.R
 # =============================================================================
@@ -9,13 +8,8 @@
 # Set-up ----------------------------------------------------------------------
 pacman::p_load(broom)
 
-# Famine confirmed by IPC, 22 August 2025
-famine_date <- as_date("2025-08-22")
 # Recruitment advertisements
 advert_dates <- as_date(c("2025-07-25", "2025-10-19"))
-second_wave_start <- advert_dates[2]
-# Public dashboard
-dashboard_dates <- setNames(as_date(c("2025-08-02")), c("live"))
 
 # Helper to count records and participants through each exclusion step
 n_exclusion <- function(label, column = "n_records") {
@@ -24,11 +18,13 @@ n_exclusion <- function(label, column = "n_records") {
 
 # Analysis --------------------------------------------------------------------
 
-## Records and exclusions (tbl-exclusions) ----
+## Records and exclusions (fig-ppt A) ----
 n_records_total <- n_exclusion("invalid_nonconsent", "n_remaining") +
   n_exclusion("invalid_nonconsent")
+n_ids_total <- n_exclusion("invalid_nonconsent", "n_participants_remaining") +
+  n_exclusion("invalid_nonconsent", "n_participants")
 
-## Unlinked follow-up measurements (fig-unlinked) ----
+## Unlinked follow-up measurements (supplement text, fig-ppt B) ----
 # Follow-up measurements, linked or not to an enrolment record
 followup_weights <- data_processed |>
   filter(
@@ -114,29 +110,7 @@ or_ci <- function(term) {
   fmt_ci(row$estimate, row$conf.low, row$conf.high, 2)
 }
 
-## Timeliness ----
-# Days from the date recorded on each form to its arrival on the server, over
-# all forms received
-submission_lag <- map2(
-  c("gaza_adult_weight_form1.csv", "gaza_adult_weight_form2.csv"),
-  c("note_identification2-date_today", "note_identification2-date_collected"),
-  \(file, recorded) {
-    read_csv(
-      here("data", "raw", file),
-      show_col_types = FALSE,
-      guess_max = 5000
-    ) |>
-      transmute(
-        recorded = as_date(.data[[recorded]]),
-        lag = as.numeric(as_date(SubmissionDate) - recorded)
-      )
-  }
-) |>
-  bind_rows() |>
-  filter(recorded >= study_start, lag >= 0) |>
-  pull(lag)
-
-## System timeline and data flow (fig-system) ----
+## Weekly measurements (fig-ppt B) ----
 # Weekly measurements by type, including follow-ups excluded as unlinked
 weekly_measurements <- bind_rows(
   included |>
@@ -191,10 +165,7 @@ flow_text <- list(
   received = sprintf(
     "Records received\n%s records from %s participant IDs",
     fmt_n(n_records_total),
-    fmt_n(
-      n_exclusion("invalid_nonconsent", "n_participants_remaining") +
-        n_exclusion("invalid_nonconsent", "n_participants")
-    )
+    fmt_n(n_ids_total)
   ),
   excluded = paste0(
     sprintf("Records excluded: %s\n", fmt_n(n_records_total - nrow(included))),
@@ -235,37 +206,21 @@ flow_text <- list(
   )
 )
 
-# Supplementary analysis ------------------------------------------------------
-
-## Mean, median and geometric mean (tbl-centre-comparison) ----
-centres_participation <- baseline |>
-  group_by(
-    group = if_else(has_followup, "2+ measurements", "Single measurement")
-  ) |>
-  summarise(n = n(), centres = list(weight_centres(pick(everything())))) |>
-  arrange(desc(group)) |>
-  mutate(
-    location = "Results, follow-up",
-    quantity = weight_label
-  )
-
 # Numbers in the text ---------------------------------------------------------
 numbers_participation <- tribble(
-  ~location                                                                                                                                                                                   , ~quantity                                                     , ~value ,
-  "Abstract; Results, participation"                                                                                                                                                          , "Study period"                                                ,
-  paste(format(min(included$record_date), "%e %B"), "to", format(max(included$record_date), "%e %B %Y"))                                                                                      ,
-  "Abstract; Results, participation"                                                                                                                                                          , "Participants; valid measurements"                            ,
-  paste(nrow(baseline), nrow(included), sep = "; ")                                                                                                                                           ,
-  "Results, participation"                                                                                                                                                                    , "Records received; participant IDs"                           ,
-  paste(n_records_total, n_exclusion("invalid_nonconsent", "n_participants_remaining") + n_exclusion("invalid_nonconsent", "n_participants"), sep = "; ")                                     ,
-  "Results, participation"                                                                                                                                                                    , "Valid measurements, % of records received"                   ,
-  fmt_pct(100 * nrow(included) / n_records_total, 0)                                                                                                                                          ,
-  "Results, participation"                                                                                                                                                                    , "Enrolled before famine confirmed; between; from second wave" ,
-  paste(sum(baseline$date_entry < famine_date), sum(baseline$date_entry >= famine_date & baseline$date_entry < second_wave_start), sum(baseline$date_entry >= second_wave_start), sep = "; ") ,
-  "Discussion; Supplement, unlinked"                                                                                                                                                          , "Median follow-up weight, kg: linked; unlinked"               ,
-  paste(followup_median_weight[["include"]], followup_median_weight[["invalid_no_baseline"]], sep = "; ")                                                                                     ,
-  "Results, follow-up"                                                                                                                                                                        , "Return for follow-up, OR (95% CI): Gaza City, North Gaza"    ,
-  or_ci("governorate_catGaza City, North Gaza")                                                                                                                                               ,
-  "Results, performance"                                                                                                                                                                      , "Forms on the server on the day recorded; within 7 days"      ,
-  paste(fmt_pct(100 * mean(submission_lag == 0), 0), fmt_pct(100 * mean(submission_lag <= 7), 1), sep = "; ")
+  ~location, ~quantity, ~value,
+  "Abstract; Results, participation", "Study period",
+  paste(format(min(included$record_date), "%e %B"), "to",
+        format(max(included$record_date), "%e %B %Y")),
+  "Abstract; Results, participation", "Participants; valid measurements",
+  paste(nrow(baseline), nrow(included), sep = "; "),
+  "Results, participation", "Records received",
+  as.character(n_records_total),
+  "Results, participation", "Valid measurements, % of records received",
+  fmt_pct(100 * nrow(included) / n_records_total, 0),
+  "Supplement, unlinked", "Median follow-up weight, kg: linked; unlinked",
+  paste(followup_median_weight[["include"]],
+        followup_median_weight[["invalid_no_baseline"]], sep = "; "),
+  "Results, sensitivity", "Return for follow-up, OR (95% CI): Gaza City, North Gaza",
+  or_ci("governorate_catGaza City, North Gaza")
 )

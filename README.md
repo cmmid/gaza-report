@@ -11,15 +11,14 @@ Both documents are rendered from the Quarto files in [report/](report/). Data cl
 
 Individual-level participant records are not in this repository, but held confidentially to reduce the risk of de-anonymisation in small samples.
 
-The repository contains three aggregate or public files, in [data/raw/](data/raw/):
+The repository contains two aggregate or public files, in [data/raw/](data/raw/):
 
 | File | Contents | Source |
 |---|---|---|
 | `gaza_survey2020_kcal_bmi_agg.csv` | Mean age, weight, height and energy intake by age band and sex, adults aged 40 and over | 2020 population survey in the Gaza Strip |
 | `ncdrisc_2026_bmi_age_sex_2022.csv` | Modelled prevalence by BMI band and sex, 2022: Palestine by 5-year age group, world age-standardised | NCD-RisC, <https://www.ncdrisc.org/data-downloads-adiposity.html> |
-| `idb2025_gaza_pop_age_sex_2025.csv` | Projected mid-2025 population of the Gaza Strip by sex and single year of age | US Census Bureau International Database, December 2025 release |
 
-[R/ncdrisc-extract.R](R/ncdrisc-extract.R) builds the NCD-RisC and IDB files from the downloaded source files.
+[R/ncdrisc-extract.R](R/ncdrisc-extract.R) builds the NCD-RisC file from the downloaded source files.
 
 ## Results
 
@@ -59,7 +58,7 @@ Each analysis script in [R/](R/) ends with a `numbers_<topic>` table listing any
 | [R/main.R](R/main.R) | Runs the cleaning step, then renders the manuscript and supplement |
 | [R/clean.R](R/clean.R) | Combines the two raw ODK forms (enrolment, follow-up) into one long dataset, one row per participant per measurement; flags each excluded record with its reason |
 | [R/utils.R](R/utils.R), [R/data.R](R/data.R) | Shared helpers; variable labels; the analysis set |
-| [R/participation.R](R/participation.R) | Exclusions, unlinked records, balance, return for follow-up, timeliness |
+| [R/participation.R](R/participation.R) | Exclusions, unlinked records, balance, return for follow-up |
 | [R/prewar.R](R/prewar.R) | Change from pre-war to enrolment, underweight relative risk, risk factors |
 | [R/followup.R](R/followup.R) | Longitudinal set, follow-up GAM, sensitivity refits |
 | [R/context.R](R/context.R) | Comparisons with the 2020 survey, NCD-RisC and published studies |
